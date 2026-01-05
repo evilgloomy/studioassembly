@@ -21,11 +21,8 @@ const Header = () => {
       <div className="section-padding">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 hover:opacity-100">
-            <img src={logo} alt="Studio Assembly" className="h-10 w-auto" />
-            <span className="text-lg font-bold tracking-widest uppercase hidden sm:block">
-              STUDIO ASSEMBLY
-            </span>
+          <Link to="/" className="hover:opacity-100">
+            <img src={logo} alt="Studio Assembly" className="h-14 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
