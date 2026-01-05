@@ -1,53 +1,25 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import productModernApt from "@/assets/product-modern-apt.jpg";
-import productHero from "@/assets/product-hero.jpg";
-
-const products: Record<string, {
-  name: string;
-  pieces: number;
-  price: number;
-  scale: string;
-  age: string;
-  image: string;
-  description: string[];
-}> = {
-  "modern-apartment-ground": {
-    name: "Modern Apartment - Ground",
-    pieces: 1400,
-    price: 189,
-    scale: "1:40",
-    age: "18+",
-    image: productModernApt,
-    description: [
-      "The Modern Apartment - Ground floor kit represents the pinnacle of contemporary urban architecture, featuring clean lines, floor-to-ceiling windows, and an open-plan layout that celebrates natural light and spatial flow.",
-      "This meticulously designed kit includes fully detailed interior furnishings, working doors, and removable roof sections for display flexibility. Perfect as a standalone piece or as part of a larger modular cityscape."
-    ]
-  },
-  "urban-loft-series": {
-    name: "Urban Loft Series",
-    pieces: 980,
-    price: 149,
-    scale: "1:40",
-    age: "16+",
-    image: productHero,
-    description: [
-      "The Urban Loft Series captures the industrial charm of converted warehouse spaces, featuring exposed brick textures, steel beam details, and oversized windows characteristic of authentic loft living.",
-      "This versatile kit can be configured in multiple layouts and stacks seamlessly with other Urban Loft modules to create impressive multi-story builds."
-    ]
-  },
-};
+import { getProductById, products } from "@/data/products";
+import ProductCard from "@/components/ProductCard";
 
 const ProductDetail = () => {
   const { productId } = useParams();
-  const product = productId ? products[productId] : null;
+  const product = productId ? getProductById(productId) : null;
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  // Get related products (same category, excluding current)
+  const relatedProducts = product 
+    ? products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3)
+    : [];
 
   if (!product) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="pt-32 pb-24 section-padding">
+        <main className="pt-48 pb-24 section-padding">
           <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
             <Link to="/shop" className="underline underline-offset-4">
@@ -63,7 +35,7 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="pt-32 pb-24">
+      <main className="pt-48 pb-24">
         <div className="section-padding">
           <div className="max-w-6xl mx-auto">
             {/* Breadcrumb */}
@@ -81,21 +53,29 @@ const ProductDetail = () => {
               <div className="space-y-4">
                 <div className="aspect-square bg-secondary overflow-hidden">
                   <img
-                    src={product.image}
+                    src={product.images[selectedImage]}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 {/* Thumbnails */}
                 <div className="grid grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="aspect-square bg-secondary border border-input hover:border-primary transition-colors cursor-pointer overflow-hidden">
+                  {product.images.map((img, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setSelectedImage(i)}
+                      className={`aspect-square bg-secondary border transition-colors cursor-pointer overflow-hidden ${
+                        selectedImage === i ? "border-primary" : "border-input hover:border-primary"
+                      }`}
+                    >
                       <img
-                        src={product.image}
-                        alt={`${product.name} view ${i}`}
-                        className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-opacity"
+                        src={img}
+                        alt={`${product.name} view ${i + 1}`}
+                        className={`w-full h-full object-cover transition-opacity ${
+                          selectedImage === i ? "opacity-100" : "opacity-70 hover:opacity-100"
+                        }`}
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -103,6 +83,9 @@ const ProductDetail = () => {
               {/* Product Info */}
               <div className="space-y-8">
                 <div>
+                  <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">
+                    {product.category}
+                  </p>
                   <h1 className="text-2xl md:text-3xl font-bold tracking-widest uppercase mb-6">
                     {product.name}
                   </h1>
@@ -145,7 +128,7 @@ const ProductDetail = () => {
                       <p>Piece Count: {product.pieces.toLocaleString()}</p>
                       <p>Scale: {product.scale}</p>
                       <p>Age: {product.age}</p>
-                      <p>Dimensions: 32 × 32 × 24 studs</p>
+                      <p>Category: {product.category}</p>
                     </div>
                   </details>
                   <details className="group border-t border-input">
@@ -160,6 +143,27 @@ const ProductDetail = () => {
                 </div>
               </div>
             </div>
+
+            {/* Related Products */}
+            {relatedProducts.length > 0 && (
+              <section className="mt-24 pt-16 border-t border-input">
+                <h2 className="text-xl font-bold tracking-widest uppercase mb-8">
+                  RELATED PRODUCTS
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {relatedProducts.map((p) => (
+                    <ProductCard 
+                      key={p.id}
+                      id={p.id}
+                      name={p.name}
+                      pieces={p.pieces}
+                      price={p.price}
+                      image={p.image}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </main>
