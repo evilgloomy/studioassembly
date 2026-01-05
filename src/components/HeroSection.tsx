@@ -1,15 +1,18 @@
 import { Link } from "react-router-dom";
-import productHero from "@/assets/product-hero.jpg";
+import { products } from "@/data/products";
 
 const HeroSection = () => {
+  // Use the Complete Edition as hero product
+  const heroProduct = products.find(p => p.id === "modern-apartment-complete") || products[0];
+
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center pt-20 section-padding">
+    <section className="min-h-screen flex flex-col items-center justify-center pt-36 section-padding">
       <div className="max-w-6xl mx-auto text-center">
         {/* Hero Image */}
         <div className="mb-12 animate-fade-in">
           <img
-            src={productHero}
-            alt="Modern Architectural Brick Kit"
+            src={heroProduct.image}
+            alt={heroProduct.name}
             className="w-full max-w-2xl mx-auto h-auto object-contain"
           />
         </div>
