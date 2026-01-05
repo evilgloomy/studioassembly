@@ -19,7 +19,7 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-primary">
       <div className="section-padding">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-36">
           {/* Logo */}
           <Link to="/" className="hover:opacity-100">
             <img src={logo} alt="Studio Assembly" className="h-28 w-auto" />
