@@ -1,47 +1,39 @@
 import { Link } from "react-router-dom";
 
-interface Product {
+interface ProductCardProps {
   id: string;
   name: string;
-  category: string;
+  pieces: number;
   price: number;
-  scale: string;
-  footprint: string;
+  image: string;
 }
 
-interface ProductCardProps {
-  product: Product;
-}
-
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ id, name, pieces, price, image }: ProductCardProps) => {
   return (
     <Link 
-      to={`/store/${product.id}`} 
-      className="group block border-t border-border pt-8"
+      to={`/shop/${id}`}
+      className="group block bg-background border border-input hover:border-primary transition-colors"
     >
-      {/* Placeholder for product image */}
-      <div className="aspect-square bg-muted mb-6 flex items-center justify-center">
-        <span className="mono text-muted-foreground text-xs">Image</span>
+      {/* Image Container */}
+      <div className="aspect-square overflow-hidden bg-secondary">
+        <img
+          src={image}
+          alt={name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
       </div>
 
       {/* Product Info */}
-      <div className="space-y-3">
-        <span className="mono text-muted-foreground text-xs block">
-          {product.category}
-        </span>
-        
-        <h3 className="font-serif text-lg group-hover:opacity-70 transition-opacity">
-          {product.name}
+      <div className="p-6">
+        <h3 className="font-semibold tracking-wide uppercase text-sm mb-2">
+          {name}
         </h3>
-
-        <div className="flex justify-between items-center">
-          <span className="mono text-xs text-muted-foreground">
-            {product.scale} · {product.footprint}
-          </span>
-          <span className="text-sm">
-            ${product.price.toFixed(2)} CAD
-          </span>
-        </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          {pieces.toLocaleString()} PCS
+        </p>
+        <p className="font-semibold text-lg">
+          ${price}
+        </p>
       </div>
     </Link>
   );

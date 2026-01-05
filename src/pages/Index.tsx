@@ -1,9 +1,8 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HeroSection from "@/components/HeroSection";
-import ManifestoSection from "@/components/ManifestoSection";
-import CitySection from "@/components/CitySection";
-import StoreAccessSection from "@/components/StoreAccessSection";
+import FeatureGrid from "@/components/FeatureGrid";
+import NewArrivals from "@/components/NewArrivals";
 
 const Index = () => {
   return (
@@ -11,9 +10,8 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
-        <ManifestoSection />
-        <CitySection />
-        <StoreAccessSection />
+        <FeatureGrid />
+        <NewArrivals />
       </main>
       <Footer />
     </div>

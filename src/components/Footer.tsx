@@ -1,53 +1,82 @@
 import { Link } from "react-router-dom";
+import { Instagram, Twitter } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="section-padding py-24 border-t border-border">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-24">
-          {/* Brand Column */}
-          <div className="space-y-6">
-            <h3 className="font-serif text-lg">Studio Assembly</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Est. 2025.<br />
-              Based in Canada.
+    <footer className="bg-background border-t border-primary">
+      <div className="section-padding py-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+          {/* Brand */}
+          <div className="md:col-span-2">
+            <h3 className="text-lg font-bold tracking-widest uppercase mb-4">
+              STUDIO ASSEMBLY
+            </h3>
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-md">
+              Curated construction kits for the modern builder. We design experiences 
+              for adult collectors who appreciate precision, scale, and architectural beauty.
             </p>
           </div>
 
-          {/* Navigation Column */}
-          <div className="space-y-6">
-            <h4 className="mono text-muted-foreground">Navigate</h4>
+          {/* Navigation */}
+          <div>
+            <h4 className="text-sm font-semibold tracking-widest uppercase mb-4">
+              NAVIGATE
+            </h4>
             <nav className="flex flex-col gap-3">
-              <Link to="/process" className="text-sm hover:opacity-70 transition-opacity">
-                Process
+              <Link to="/shop" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Shop
               </Link>
-              <Link to="/city" className="text-sm hover:opacity-70 transition-opacity">
-                The City
+              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                About
               </Link>
-              <Link to="/store" className="text-sm hover:opacity-70 transition-opacity">
-                Store
+              <Link to="/journal" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Journal
               </Link>
-              <Link to="/contact" className="text-sm hover:opacity-70 transition-opacity">
+              <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Contact
               </Link>
             </nav>
           </div>
 
-          {/* Legal Column */}
-          <div className="space-y-6">
-            <h4 className="mono text-muted-foreground">Legal</h4>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              An independent design studio.<br />
-              Not affiliated with the LEGO® Group.
-            </p>
+          {/* Connect */}
+          <div>
+            <h4 className="text-sm font-semibold tracking-widest uppercase mb-4">
+              CONNECT
+            </h4>
+            <div className="flex gap-4">
+              <a 
+                href="https://instagram.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram size={20} strokeWidth={1.5} />
+              </a>
+              <a 
+                href="https://twitter.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Twitter"
+              >
+                <Twitter size={20} strokeWidth={1.5} />
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="divider mt-16 mb-8" />
-
-        <p className="mono text-muted-foreground text-center">
-          © 2025 Studio Assembly. All rights reserved.
-        </p>
+        {/* Bottom */}
+        <div className="mt-16 pt-8 border-t border-input">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Studio Assembly. All rights reserved.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Not affiliated with the LEGO Group.
+            </p>
+          </div>
+        </div>
       </div>
     </footer>
   );

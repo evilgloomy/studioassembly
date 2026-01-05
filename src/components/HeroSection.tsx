@@ -1,30 +1,46 @@
-import heroImage from "@/assets/hero-city.jpg";
+import { Link } from "react-router-dom";
+import productHero from "@/assets/product-hero.jpg";
 
 const HeroSection = () => {
   return (
-    <section className="pt-24">
-      {/* Full-width hero image */}
-      <div className="w-full h-[70vh] md:h-[85vh] overflow-hidden">
-        <img
-          src={heroImage}
-          alt="Modular city diorama in museum display"
-          className="w-full h-full object-cover"
-        />
-      </div>
+    <section className="min-h-screen flex flex-col items-center justify-center pt-20 section-padding">
+      <div className="max-w-6xl mx-auto text-center">
+        {/* Hero Image */}
+        <div className="mb-12 animate-fade-in">
+          <img
+            src={productHero}
+            alt="Modern Architectural Brick Kit"
+            className="w-full max-w-2xl mx-auto h-auto object-contain"
+          />
+        </div>
 
-      {/* Studio tagline below image */}
-      <div className="section-padding py-16 md:py-24">
-        <div className="max-w-3xl">
-          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl leading-tight mb-6 animate-fade-in">
-            Studio Assembly
-          </h1>
-          <p 
-            className="text-lg md:text-xl text-muted-foreground leading-relaxed animate-fade-in"
-            style={{ animationDelay: "0.15s" }}
+        {/* Headline */}
+        <h1 
+          className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-wider uppercase mb-6 animate-fade-in"
+          style={{ animationDelay: "0.2s" }}
+        >
+          ARCHITECTURE IN MINIATURE.
+        </h1>
+
+        {/* Subheadline */}
+        <p 
+          className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto animate-fade-in"
+          style={{ animationDelay: "0.4s" }}
+        >
+          Curated construction kits for the modern builder.
+        </p>
+
+        {/* CTA Button */}
+        <div 
+          className="animate-fade-in"
+          style={{ animationDelay: "0.6s" }}
+        >
+          <Link
+            to="/shop"
+            className="btn-gold inline-block text-sm"
           >
-            A spatial design practice focused on modular cities, recursive systems, 
-            and brick-built environments.
-          </p>
+            VIEW COLLECTION
+          </Link>
         </div>
       </div>
     </section>
