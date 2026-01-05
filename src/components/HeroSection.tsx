@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { products } from "@/data/products";
 
 const HeroSection = () => {
-  // Use the Complete Edition as hero product
-  const heroProduct = products.find(p => p.id === "modern-apartment-complete") || products[0];
+  // Use the Supermarket as hero product
+  const heroProduct = products.find(p => p.id === "supermarket") || products[0];
 
   return (
     <section className="min-h-screen flex flex-col items-center justify-center pt-36 section-padding">
