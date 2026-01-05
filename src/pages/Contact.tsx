@@ -1,65 +1,99 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Mail, MapPin } from "lucide-react";
 
 const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="pt-32 pb-24">
-        {/* Page Header */}
-        <section className="section-padding mb-24">
-          <div className="max-w-3xl">
-            <span className="mono text-muted-foreground block mb-4">Connect</span>
-            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl mb-8">
-              Contact
-            </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed">
-              For inquiries regarding custom commissions, collaborations, 
-              or component specifications.
-            </p>
-          </div>
-        </section>
+        <div className="section-padding">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+              {/* Contact Info */}
+              <div className="space-y-8">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-widest uppercase">
+                  CONTACT
+                </h1>
+                <p className="text-muted-foreground leading-relaxed max-w-md">
+                  Have questions about our kits, custom projects, or wholesale inquiries? 
+                  We'd love to hear from you.
+                </p>
 
-        {/* Contact Info */}
-        <section className="section-padding py-16 border-t border-border">
-          <div className="max-w-3xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-              <div className="space-y-4">
-                <h2 className="mono text-muted-foreground">General Inquiries</h2>
-                <a 
-                  href="mailto:hello@studioassembly.ca" 
-                  className="text-link block text-lg"
-                >
-                  hello@studioassembly.ca
-                </a>
+                <div className="space-y-6 pt-8">
+                  <div className="flex items-start gap-4">
+                    <Mail size={20} strokeWidth={1.5} className="mt-1" />
+                    <div>
+                      <h3 className="font-semibold tracking-wider uppercase text-sm mb-1">
+                        EMAIL
+                      </h3>
+                      <a 
+                        href="mailto:hello@studioassembly.com" 
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        hello@studioassembly.com
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <MapPin size={20} strokeWidth={1.5} className="mt-1" />
+                    <div>
+                      <h3 className="font-semibold tracking-wider uppercase text-sm mb-1">
+                        LOCATION
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Toronto, Canada
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <h2 className="mono text-muted-foreground">Location</h2>
-                <p className="text-muted-foreground">
-                  Based in Canada<br />
-                  Remote Studio
-                </p>
+              {/* Contact Form */}
+              <div className="border border-primary p-8 lg:p-12">
+                <h2 className="text-lg font-semibold tracking-widest uppercase mb-8">
+                  SEND A MESSAGE
+                </h2>
+                <form className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium tracking-wider uppercase mb-2">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors"
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium tracking-wider uppercase mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      className="w-full border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium tracking-wider uppercase mb-2">
+                      Message
+                    </label>
+                    <textarea
+                      rows={5}
+                      className="w-full border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors resize-none"
+                      placeholder="Your message..."
+                    />
+                  </div>
+                  <button type="submit" className="btn-black w-full text-sm">
+                    SEND MESSAGE
+                  </button>
+                </form>
               </div>
             </div>
           </div>
-        </section>
-
-        {/* Commission Note */}
-        <section className="section-padding py-24 border-t border-border">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="font-serif text-2xl mb-8">Custom Commissions</h2>
-            <p className="text-muted-foreground leading-relaxed mb-6">
-              Studio Assembly accepts select custom commissions for architectural 
-              components and district modules. Each project is evaluated based on 
-              complexity, scale, and alignment with our design philosophy.
-            </p>
-            <p className="text-muted-foreground leading-relaxed">
-              For commission inquiries, please include project scope, reference 
-              imagery, and timeline requirements.
-            </p>
-          </div>
-        </section>
+        </div>
       </main>
       <Footer />
     </div>

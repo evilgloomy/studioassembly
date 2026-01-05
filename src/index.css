@@ -5,82 +5,82 @@
 @layer base {
   :root {
     /* Studio Assembly Design System */
-    /* Warm White Background */
-    --background: 60 6% 96%;
-    --foreground: 0 0% 11%;
+    /* Canvas White Background */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
 
     /* Cards use same background */
-    --card: 60 6% 96%;
-    --card-foreground: 0 0% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
 
-    --popover: 60 6% 96%;
-    --popover-foreground: 0 0% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
 
-    /* Primary: Charcoal */
-    --primary: 0 0% 11%;
-    --primary-foreground: 60 6% 96%;
+    /* Primary: Studio Black */
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Muted Gray */
-    --secondary: 0 0% 43%;
-    --secondary-foreground: 60 6% 96%;
+    /* Secondary: Concrete Grey */
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 0%;
 
     /* Muted elements */
-    --muted: 0 0% 90%;
-    --muted-foreground: 0 0% 43%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Accent: Subtle stone */
-    --accent: 30 5% 85%;
-    --accent-foreground: 0 0% 11%;
+    /* Accent: Assembly Gold */
+    --accent: 51 100% 50%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 60 6% 96%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Borders - very subtle */
-    --border: 0 0% 85%;
+    /* Borders - thin black lines */
+    --border: 0 0% 0%;
     --input: 0 0% 85%;
-    --ring: 0 0% 11%;
+    --ring: 0 0% 0%;
 
-    /* Zero radius - architectural precision */
+    /* Zero radius - square corners only */
     --radius: 0px;
 
-    --sidebar-background: 60 6% 96%;
-    --sidebar-foreground: 0 0% 11%;
-    --sidebar-primary: 0 0% 11%;
-    --sidebar-primary-foreground: 60 6% 96%;
-    --sidebar-accent: 0 0% 90%;
-    --sidebar-accent-foreground: 0 0% 11%;
-    --sidebar-border: 0 0% 85%;
-    --sidebar-ring: 0 0% 11%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 0%;
+    --sidebar-ring: 0 0% 0%;
   }
 
   .dark {
-    --background: 0 0% 8%;
-    --foreground: 60 6% 96%;
+    --background: 0 0% 5%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 60 6% 96%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 10%;
-    --popover-foreground: 60 6% 96%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 60 6% 96%;
-    --primary-foreground: 0 0% 11%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 60%;
-    --secondary-foreground: 0 0% 11%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 20%;
+    --muted: 0 0% 15%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 0 0% 18%;
-    --accent-foreground: 60 6% 96%;
+    --accent: 51 100% 50%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 62% 30%;
-    --destructive-foreground: 60 6% 96%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
+    --border: 0 0% 100%;
     --input: 0 0% 20%;
-    --ring: 60 6% 96%;
+    --ring: 0 0% 100%;
   }
 }
 
@@ -95,36 +95,29 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
-    font-weight: 300;
-    letter-spacing: 0.01em;
-  }
-
-  /* Serif typography for headings */
-  .font-serif {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Montserrat', sans-serif;
     font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.7;
   }
 
-  /* Strict link styling - underline on hover */
-  a {
-    @apply transition-opacity duration-200;
-  }
-
-  a:hover {
-    @apply opacity-70;
+  /* Headers use Montserrat Bold */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.05em;
   }
 
   /* Selection color */
   ::selection {
-    @apply bg-primary text-primary-foreground;
+    @apply bg-accent text-accent-foreground;
   }
 }
 
 @layer components {
-  /* Architectural divider */
+  /* Blueprint divider - thin black line */
   .divider {
-    @apply w-full h-px bg-border;
+    @apply w-full h-px bg-primary;
   }
 
   /* Section spacing */
@@ -139,10 +132,20 @@
 
   /* Monospace for specs */
   .mono {
-    font-family: 'Inter', monospace;
-    font-weight: 400;
-    letter-spacing: 0.05em;
+    font-family: 'Montserrat', monospace;
+    font-weight: 500;
+    letter-spacing: 0.1em;
     font-size: 0.75rem;
     text-transform: uppercase;
+  }
+
+  /* Gold CTA button */
+  .btn-gold {
+    @apply bg-accent text-accent-foreground font-semibold uppercase tracking-widest px-8 py-4 transition-opacity hover:opacity-90;
+  }
+
+  /* Black button */
+  .btn-black {
+    @apply bg-primary text-primary-foreground font-semibold uppercase tracking-widest px-8 py-4 transition-opacity hover:opacity-90;
   }
 }

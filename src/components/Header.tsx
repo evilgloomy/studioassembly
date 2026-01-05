@@ -1,33 +1,77 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import logo from "@/assets/logo.jpg";
 
 const Header = () => {
-  return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm">
-      <div className="section-padding">
-        <nav className="flex items-center justify-between py-6 border-b border-border">
-          <Link to="/" className="font-serif text-xl tracking-tight">
-            Studio Assembly
-          </Link>
-          
-          <div className="hidden md:flex items-center gap-12">
-            <Link to="/process" className="mono text-muted-foreground hover:text-foreground transition-colors">
-              Process
-            </Link>
-            <Link to="/city" className="mono text-muted-foreground hover:text-foreground transition-colors">
-              The City
-            </Link>
-            <Link to="/store" className="mono text-muted-foreground hover:text-foreground transition-colors">
-              Store
-            </Link>
-            <Link to="/contact" className="mono text-muted-foreground hover:text-foreground transition-colors">
-              Contact
-            </Link>
-          </div>
+  const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-          <button className="md:hidden mono text-muted-foreground">
-            Menu
+  const navLinks = [
+    { name: "SHOP", path: "/shop" },
+    { name: "ABOUT", path: "/about" },
+    { name: "JOURNAL", path: "/journal" },
+    { name: "CONTACT", path: "/contact" },
+  ];
+
+  const isActive = (path: string) => location.pathname === path;
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-primary">
+      <div className="section-padding">
+        <div className="flex items-center justify-between h-20">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3 hover:opacity-100">
+            <img src={logo} alt="Studio Assembly" className="h-10 w-auto" />
+            <span className="text-lg font-bold tracking-widest uppercase hidden sm:block">
+              STUDIO ASSEMBLY
+            </span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-10">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`text-sm font-medium tracking-widest uppercase transition-opacity hover:opacity-70 ${
+                  isActive(link.path) ? "underline underline-offset-8 decoration-1" : ""
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-        </nav>
+        </div>
+
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <nav className="md:hidden py-6 border-t border-primary">
+            <div className="flex flex-col gap-6">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`text-sm font-medium tracking-widest uppercase transition-opacity hover:opacity-70 ${
+                    isActive(link.path) ? "underline underline-offset-4 decoration-1" : ""
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        )}
       </div>
     </header>
   );
