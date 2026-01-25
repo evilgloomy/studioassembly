@@ -1,0 +1,141 @@
+import { useParams, Link } from 'react-router-dom';
+import { usePostBySlug } from '@/hooks/usePosts';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { ArrowLeft, Calendar, User } from 'lucide-react';
+import { format } from 'date-fns';
+
+export default function JournalPost() {
+  const { slug } = useParams<{ slug: string }>();
+  const { data: post, isLoading, error } = usePostBySlug(slug);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-32 pb-24">
+          <div className="section-padding">
+            <div className="max-w-3xl mx-auto text-center">
+              <div className="text-muted-foreground tracking-widest uppercase text-sm">
+                Loading...
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-32 pb-24">
+          <div className="section-padding">
+            <div className="max-w-3xl mx-auto text-center">
+              <h1 className="text-2xl font-bold tracking-widest uppercase mb-4">
+                Post Not Found
+              </h1>
+              <p className="text-muted-foreground mb-8">
+                The post you're looking for doesn't exist or has been removed.
+              </p>
+              <Link
+                to="/journal"
+                className="inline-flex items-center text-sm tracking-widest uppercase hover:underline"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Journal
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="pt-32 pb-24">
+        <article className="section-padding">
+          <div className="max-w-3xl mx-auto">
+            {/* Back Link */}
+            <Link
+              to="/journal"
+              className="inline-flex items-center text-sm text-muted-foreground tracking-widest uppercase hover:text-foreground transition-colors mb-8"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Journal
+            </Link>
+
+            {/* Cover Image */}
+            {post.cover_image_url && (
+              <div className="aspect-video bg-secondary mb-8 overflow-hidden">
+                <img
+                  src={post.cover_image_url}
+                  alt={post.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            {/* Header */}
+            <header className="mb-8">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-widest uppercase mb-4">
+                {post.title}
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                {post.author_profile?.display_name && (
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>{post.author_profile.display_name}</span>
+                  </div>
+                )}
+                {post.published_at && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <time dateTime={post.published_at}>
+                      {format(new Date(post.published_at), 'MMMM d, yyyy')}
+                    </time>
+                  </div>
+                )}
+              </div>
+
+              {post.summary && (
+                <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+                  {post.summary}
+                </p>
+              )}
+            </header>
+
+            {/* Content */}
+            <div className="prose prose-neutral max-w-none">
+              {post.content?.split('\n').map((paragraph, index) => (
+                paragraph.trim() && (
+                  <p key={index} className="mb-4 leading-relaxed">
+                    {paragraph}
+                  </p>
+                )
+              ))}
+            </div>
+
+            {/* Footer */}
+            <footer className="mt-12 pt-8 border-t border-input">
+              <Link
+                to="/journal"
+                className="inline-flex items-center text-sm tracking-widest uppercase hover:underline"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                More from the Journal
+              </Link>
+            </footer>
+          </div>
+        </article>
+      </main>
+      <Footer />
+    </div>
+  );
+}
