@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePost, useCreatePost, useUpdatePost, generateSlug } from '@/hooks/usePosts';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,9 +15,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, Eye, Send } from 'lucide-react';
+import { ArrowLeft, Save, Send, Sparkles, RefreshCw, Image as ImageIcon } from 'lucide-react';
 import { z } from 'zod';
 import type { Database } from '@/integrations/supabase/types';
+import { ImageUploader } from '@/components/admin/ImageUploader';
+import { MediaPicker } from '@/components/admin/MediaPicker';
 
 type PostStatus = Database['public']['Enums']['post_status'];
 
@@ -55,6 +58,8 @@ export default function PostEditor() {
   const [errors, setErrors] = useState<Partial<Record<keyof PostFormData, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [autoSlug, setAutoSlug] = useState(true);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
   // Load existing post data
   useEffect(() => {
@@ -103,6 +108,47 @@ export default function PostEditor() {
     }
     setErrors({});
     return true;
+  };
+
+  const handleGenerateSummary = async () => {
+    if (!formData.content || formData.content.length < 100) {
+      toast({
+        variant: 'destructive',
+        title: 'Not enough content',
+        description: 'Please write at least 100 characters of content before generating a summary.',
+      });
+      return;
+    }
+
+    setIsGeneratingSummary(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-summary', {
+        body: {
+          title: formData.title,
+          content: formData.content,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.summary) {
+        handleChange('summary', data.summary);
+        toast({
+          title: 'Summary generated',
+          description: 'AI has created an SEO-optimized summary for your post.',
+        });
+      }
+    } catch (error: any) {
+      console.error('Summary generation error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Generation failed',
+        description: error.message || 'Failed to generate summary. Please try again.',
+      });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
   };
 
   const handleSave = async (publishNow: boolean = false) => {
@@ -157,6 +203,7 @@ export default function PostEditor() {
   };
 
   const canPublish = isAdmin || isEditor || formData.status === 'draft';
+  const summaryCharCount = formData.summary?.length || 0;
 
   if (isLoadingPost && isEditing) {
     return (
@@ -249,9 +296,14 @@ export default function PostEditor() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="summary" className="text-xs tracking-widest uppercase">
-                Summary
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="summary" className="text-xs tracking-widest uppercase">
+                  Summary
+                </Label>
+                <span className={`text-xs ${summaryCharCount > 160 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {summaryCharCount}/160
+                </span>
+              </div>
               <Textarea
                 id="summary"
                 value={formData.summary}
@@ -259,6 +311,23 @@ export default function PostEditor() {
                 placeholder="Brief description for previews and SEO..."
                 rows={3}
               />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateSummary}
+                  disabled={isGeneratingSummary || !formData.content || formData.content.length < 100}
+                  className="tracking-widest uppercase text-xs"
+                >
+                  {isGeneratingSummary ? (
+                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3 mr-2" />
+                  )}
+                  {isGeneratingSummary ? 'Generating...' : 'Generate with AI'}
+                </Button>
+              </div>
               {errors.summary && (
                 <p className="text-xs text-destructive">{errors.summary}</p>
               )}
@@ -315,29 +384,36 @@ export default function PostEditor() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cover_image_url" className="text-xs tracking-widest uppercase">
-                Cover Image URL
+              <Label className="text-xs tracking-widest uppercase">
+                Cover Image
               </Label>
+              
+              <ImageUploader
+                currentImage={formData.cover_image_url}
+                onUpload={(url) => handleChange('cover_image_url', url)}
+                onClear={() => handleChange('cover_image_url', '')}
+              />
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setMediaPickerOpen(true)}
+                className="w-full tracking-widest uppercase text-xs"
+              >
+                <ImageIcon className="h-3 w-3 mr-2" />
+                Browse Media Library
+              </Button>
+
               <Input
                 id="cover_image_url"
                 value={formData.cover_image_url}
                 onChange={(e) => handleChange('cover_image_url', e.target.value)}
-                placeholder="https://..."
+                placeholder="Or paste URL..."
+                className="text-xs"
               />
               {errors.cover_image_url && (
                 <p className="text-xs text-destructive">{errors.cover_image_url}</p>
-              )}
-              {formData.cover_image_url && (
-                <div className="mt-2 aspect-video bg-secondary overflow-hidden">
-                  <img
-                    src={formData.cover_image_url}
-                    alt="Cover preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
               )}
             </div>
           </div>
@@ -358,6 +434,13 @@ export default function PostEditor() {
           )}
         </div>
       </div>
+
+      {/* Media Picker Dialog */}
+      <MediaPicker
+        open={mediaPickerOpen}
+        onOpenChange={setMediaPickerOpen}
+        onSelect={(url) => handleChange('cover_image_url', url)}
+      />
     </div>
   );
 }
