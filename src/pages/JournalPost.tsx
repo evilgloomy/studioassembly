@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
 
 export default function JournalPost() {
   const { slug } = useParams<{ slug: string }>();
@@ -113,13 +114,44 @@ export default function JournalPost() {
 
             {/* Content */}
             <div className="prose prose-neutral max-w-none">
-              {post.content?.split('\n').map((paragraph, index) => (
-                paragraph.trim() && (
-                  <p key={index} className="mb-4 leading-relaxed">
-                    {paragraph}
-                  </p>
-                )
-              ))}
+              <ReactMarkdown
+                components={{
+                  img: ({ src, alt }) => (
+                    <img
+                      src={src}
+                      alt={alt || 'Image'}
+                      className="w-full h-auto my-6"
+                      loading="lazy"
+                    />
+                  ),
+                  p: ({ children }) => (
+                    <p className="mb-4 leading-relaxed">{children}</p>
+                  ),
+                  h1: ({ children }) => (
+                    <h1 className="text-2xl font-bold tracking-widest uppercase mt-8 mb-4">{children}</h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-xl font-bold tracking-widest uppercase mt-8 mb-4">{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-lg font-bold tracking-widest uppercase mt-6 mb-3">{children}</h3>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-4 border-primary pl-4 italic my-4">{children}</blockquote>
+                  ),
+                  a: ({ href, children }) => (
+                    <a href={href} className="underline hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer">{children}</a>
+                  ),
+                }}
+              >
+                {post.content || ''}
+              </ReactMarkdown>
             </div>
 
             {/* Footer */}
