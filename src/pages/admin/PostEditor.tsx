@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePost, useCreatePost, useUpdatePost, generateSlug } from '@/hooks/usePosts';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -60,6 +60,8 @@ export default function PostEditor() {
   const [autoSlug, setAutoSlug] = useState(true);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const [contentMediaPickerOpen, setContentMediaPickerOpen] = useState(false);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load existing post data
   useEffect(() => {
@@ -149,6 +151,30 @@ export default function PostEditor() {
     } finally {
       setIsGeneratingSummary(false);
     }
+  };
+
+  const handleInsertImage = (url: string) => {
+    const textarea = contentTextareaRef.current;
+    if (!textarea) {
+      // Fallback: append to end
+      const markdown = `\n![Image](${url})\n`;
+      handleChange('content', formData.content + markdown);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const content = formData.content || '';
+    const markdown = `![Image](${url})`;
+    
+    const newContent = content.substring(0, start) + markdown + content.substring(end);
+    handleChange('content', newContent);
+
+    // Restore cursor position after the inserted text
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + markdown.length, start + markdown.length);
+    }, 0);
   };
 
   const handleSave = async (publishNow: boolean = false) => {
@@ -334,10 +360,23 @@ export default function PostEditor() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="content" className="text-xs tracking-widest uppercase">
-                Content
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="content" className="text-xs tracking-widest uppercase">
+                  Content
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setContentMediaPickerOpen(true)}
+                  className="tracking-widest uppercase text-xs"
+                >
+                  <ImageIcon className="h-3 w-3 mr-2" />
+                  Insert Image
+                </Button>
+              </div>
               <Textarea
+                ref={contentTextareaRef}
                 id="content"
                 value={formData.content}
                 onChange={(e) => handleChange('content', e.target.value)}
@@ -435,11 +474,18 @@ export default function PostEditor() {
         </div>
       </div>
 
-      {/* Media Picker Dialog */}
+      {/* Cover Image Media Picker Dialog */}
       <MediaPicker
         open={mediaPickerOpen}
         onOpenChange={setMediaPickerOpen}
         onSelect={(url) => handleChange('cover_image_url', url)}
+      />
+
+      {/* Content Image Media Picker Dialog */}
+      <MediaPicker
+        open={contentMediaPickerOpen}
+        onOpenChange={setContentMediaPickerOpen}
+        onSelect={handleInsertImage}
       />
     </div>
   );
