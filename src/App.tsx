@@ -25,6 +25,7 @@ import AdminPosts from "./pages/admin/Posts";
 import PostEditor from "./pages/admin/PostEditor";
 import AdminMedia from "./pages/admin/Media";
 import AdminTeam from "./pages/admin/Team";
+import PageEditor from "./pages/admin/PageEditor";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="posts/new" element={<PostEditor />} />
               <Route path="posts/:id/edit" element={<PostEditor />} />
               <Route path="media" element={<AdminMedia />} />
+              <Route path="pages/:pageSlug" element={<PageEditor />} />
               <Route path="team" element={<ProtectedRoute requiredRole="admin"><AdminTeam /></ProtectedRoute>} />
             </Route>
 

@@ -56,6 +56,147 @@ export type Database = {
         }
         Relationships: []
       }
+      media_file_tags: {
+        Row: {
+          id: string
+          media_file_id: string
+          tag_id: string
+        }
+        Insert: {
+          id?: string
+          media_file_id: string
+          tag_id: string
+        }
+        Update: {
+          id?: string
+          media_file_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_file_tags_media_file_id_fkey"
+            columns: ["media_file_id"]
+            isOneToOne: false
+            referencedRelation: "media_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_file_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "media_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_files: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          filename: string
+          height: number | null
+          id: string
+          mime_type: string | null
+          original_filename: string | null
+          size_bytes: number | null
+          storage_path: string
+          updated_at: string
+          uploaded_by: string | null
+          width: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          filename: string
+          height?: number | null
+          id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          updated_at?: string
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          filename?: string
+          height?: number | null
+          id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Relationships: []
+      }
+      media_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      page_sections: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          is_visible: boolean
+          page_slug: string
+          section_key: string
+          section_type: string
+          sort_order: number
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          page_slug: string
+          section_key: string
+          section_type?: string
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          page_slug?: string
+          section_key?: string
+          section_type?: string
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       post_revisions: {
         Row: {
           content: string | null
