@@ -8,6 +8,8 @@ import {
   LogOut,
   ChevronLeft,
   Home,
+  PanelTop,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -34,6 +36,16 @@ const navItems = [
     path: '/admin/media', 
     label: 'Media', 
     icon: Image,
+  },
+  { 
+    path: '/admin/pages/home', 
+    label: 'Homepage', 
+    icon: PanelTop,
+  },
+  { 
+    path: '/admin/pages/about', 
+    label: 'About Page', 
+    icon: Info,
   },
   { 
     path: '/admin/team', 
