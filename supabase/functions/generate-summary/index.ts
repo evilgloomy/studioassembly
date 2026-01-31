@@ -51,11 +51,37 @@ serve(async (req) => {
       );
     }
 
-    const { title, content } = await req.json();
+    const body = await req.json();
+    const { title, content } = body;
 
+    // Type validation
+    if ((title !== undefined && typeof title !== 'string') || 
+        (content !== undefined && typeof content !== 'string')) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid input types: title and content must be strings' }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Presence validation
     if (!title && !content) {
       return new Response(
         JSON.stringify({ error: "Title or content is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Length validation
+    if (title && title.length > 500) {
+      return new Response(
+        JSON.stringify({ error: 'Title too long (max 500 characters)' }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (content && content.length > 50000) {
+      return new Response(
+        JSON.stringify({ error: 'Content too long (max 50000 characters)' }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
