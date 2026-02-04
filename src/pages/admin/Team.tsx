@@ -62,6 +62,8 @@ const roleColors: Record<AppRole, string> = {
   admin: 'bg-red-100 text-red-800',
   editor: 'bg-blue-100 text-blue-800',
   author: 'bg-green-100 text-green-800',
+  caerhold_admin: 'bg-purple-100 text-purple-800',
+  caerhold_editor: 'bg-indigo-100 text-indigo-800',
 };
 
 const inviteSchema = z.object({
