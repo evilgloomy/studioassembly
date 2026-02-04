@@ -14,6 +14,365 @@ export type Database = {
   }
   public: {
     Tables: {
+      caerhold_locations: {
+        Row: {
+          canon_rules: Json
+          created_at: string
+          description: string | null
+          hero_media_id: string | null
+          id: string
+          name: string
+          slug: string
+          type: Database["public"]["Enums"]["caerhold_location_type"]
+          updated_at: string
+        }
+        Insert: {
+          canon_rules?: Json
+          created_at?: string
+          description?: string | null
+          hero_media_id?: string | null
+          id?: string
+          name: string
+          slug: string
+          type: Database["public"]["Enums"]["caerhold_location_type"]
+          updated_at?: string
+        }
+        Update: {
+          canon_rules?: Json
+          created_at?: string
+          description?: string | null
+          hero_media_id?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          type?: Database["public"]["Enums"]["caerhold_location_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_hero_media"
+            columns: ["hero_media_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caerhold_media: {
+        Row: {
+          captured_at: string | null
+          created_at: string
+          id: string
+          public_url: string
+          storage_path: string
+          thumb_url: string | null
+          type: string
+          upload_batch_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          captured_at?: string | null
+          created_at?: string
+          id?: string
+          public_url: string
+          storage_path: string
+          thumb_url?: string | null
+          type: string
+          upload_batch_id: string
+          uploaded_by: string
+        }
+        Update: {
+          captured_at?: string | null
+          created_at?: string
+          id?: string
+          public_url?: string
+          storage_path?: string
+          thumb_url?: string | null
+          type?: string
+          upload_batch_id?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      caerhold_media_location_tags: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string
+          media_id: string
+          tagged_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id: string
+          media_id: string
+          tagged_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string
+          media_id?: string
+          tagged_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_media_location_tags_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_media_location_tags_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caerhold_media_resident_tags: {
+        Row: {
+          created_at: string
+          id: string
+          media_id: string
+          resident_id: string
+          tagged_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_id: string
+          resident_id: string
+          tagged_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_id?: string
+          resident_id?: string
+          tagged_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_media_resident_tags_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_media_resident_tags_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caerhold_post_generation_jobs: {
+        Row: {
+          created_at: string
+          draft_post_id: string | null
+          id: string
+          job_hash: string
+          location_id: string | null
+          resident_id: string
+          status: string
+          upload_batch_id: string
+        }
+        Insert: {
+          created_at?: string
+          draft_post_id?: string | null
+          id?: string
+          job_hash: string
+          location_id?: string | null
+          resident_id: string
+          status?: string
+          upload_batch_id: string
+        }
+        Update: {
+          created_at?: string
+          draft_post_id?: string | null
+          id?: string
+          job_hash?: string
+          location_id?: string | null
+          resident_id?: string
+          status?: string
+          upload_batch_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_post_generation_jobs_draft_post_id_fkey"
+            columns: ["draft_post_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_post_generation_jobs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_post_generation_jobs_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caerhold_post_media: {
+        Row: {
+          media_id: string
+          post_id: string
+        }
+        Insert: {
+          media_id: string
+          post_id: string
+        }
+        Update: {
+          media_id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_post_media_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_post_media_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caerhold_posts: {
+        Row: {
+          admin_notes: string | null
+          ai_caption: string | null
+          author_type: Database["public"]["Enums"]["caerhold_author_type"]
+          caption: string | null
+          created_at: string
+          created_by: string
+          id: string
+          location_id: string | null
+          published_at: string | null
+          resident_id: string | null
+          scheduled_at: string | null
+          status: Database["public"]["Enums"]["caerhold_post_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          ai_caption?: string | null
+          author_type: Database["public"]["Enums"]["caerhold_author_type"]
+          caption?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          location_id?: string | null
+          published_at?: string | null
+          resident_id?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["caerhold_post_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          ai_caption?: string | null
+          author_type?: Database["public"]["Enums"]["caerhold_author_type"]
+          caption?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          location_id?: string | null
+          published_at?: string | null
+          resident_id?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["caerhold_post_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_posts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_posts_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caerhold_residents: {
+        Row: {
+          avatar_media_id: string | null
+          bio: string | null
+          canon_rules: Json
+          created_at: string
+          display_name: string
+          handle: string
+          id: string
+          posting_enabled: boolean
+          role_title: string | null
+          slug: string
+          tone_profile: Json
+          updated_at: string
+        }
+        Insert: {
+          avatar_media_id?: string | null
+          bio?: string | null
+          canon_rules?: Json
+          created_at?: string
+          display_name: string
+          handle: string
+          id?: string
+          posting_enabled?: boolean
+          role_title?: string | null
+          slug: string
+          tone_profile?: Json
+          updated_at?: string
+        }
+        Update: {
+          avatar_media_id?: string | null
+          bio?: string | null
+          canon_rules?: Json
+          created_at?: string
+          display_name?: string
+          handle?: string
+          id?: string
+          posting_enabled?: boolean
+          role_title?: string | null
+          slug?: string
+          tone_profile?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_avatar_media"
+            columns: ["avatar_media_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journal_posts: {
         Row: {
           author_id: string | null
@@ -346,6 +705,13 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      has_caerhold_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -354,6 +720,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
+      is_caerhold_admin_or_editor: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
@@ -362,6 +732,14 @@ export type Database = {
         | "author"
         | "caerhold_admin"
         | "caerhold_editor"
+      caerhold_author_type: "resident" | "location"
+      caerhold_location_type:
+        | "landmark"
+        | "business"
+        | "residence"
+        | "street"
+        | "park"
+      caerhold_post_status: "draft" | "approved" | "scheduled" | "published"
       post_status: "draft" | "scheduled" | "published" | "archived"
     }
     CompositeTypes: {
@@ -497,6 +875,15 @@ export const Constants = {
         "caerhold_admin",
         "caerhold_editor",
       ],
+      caerhold_author_type: ["resident", "location"],
+      caerhold_location_type: [
+        "landmark",
+        "business",
+        "residence",
+        "street",
+        "park",
+      ],
+      caerhold_post_status: ["draft", "approved", "scheduled", "published"],
       post_status: ["draft", "scheduled", "published", "archived"],
     },
   },
