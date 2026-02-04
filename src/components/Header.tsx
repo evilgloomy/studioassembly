@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Landmark } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 
 const Header = () => {
@@ -8,6 +8,7 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
+    { name: "CITY OF CAERHOLD", path: "/caerhold", icon: Landmark },
     { name: "SHOP", path: "/shop" },
     { name: "ABOUT", path: "/about" },
     { name: "JOURNAL", path: "/journal" },
@@ -31,10 +32,11 @@ const Header = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium tracking-widest uppercase transition-opacity hover:opacity-70 ${
+                className={`flex items-center gap-2 text-sm font-medium tracking-widest uppercase transition-opacity hover:opacity-70 ${
                   isActive(link.path) ? "underline underline-offset-8 decoration-1" : ""
                 }`}
               >
+                {link.icon && <link.icon className="h-4 w-4" />}
                 {link.name}
               </Link>
             ))}
@@ -59,10 +61,11 @@ const Header = () => {
                   key={link.path}
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`text-sm font-medium tracking-widest uppercase transition-opacity hover:opacity-70 ${
+                  className={`flex items-center gap-2 text-sm font-medium tracking-widest uppercase transition-opacity hover:opacity-70 ${
                     isActive(link.path) ? "underline underline-offset-4 decoration-1" : ""
                   }`}
                 >
+                  {link.icon && <link.icon className="h-4 w-4" />}
                   {link.name}
                 </Link>
               ))}
