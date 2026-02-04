@@ -356,7 +356,12 @@ export type Database = {
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "editor" | "author"
+      app_role:
+        | "admin"
+        | "editor"
+        | "author"
+        | "caerhold_admin"
+        | "caerhold_editor"
       post_status: "draft" | "scheduled" | "published" | "archived"
     }
     CompositeTypes: {
@@ -485,7 +490,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "editor", "author"],
+      app_role: [
+        "admin",
+        "editor",
+        "author",
+        "caerhold_admin",
+        "caerhold_editor",
+      ],
       post_status: ["draft", "scheduled", "published", "archived"],
     },
   },
