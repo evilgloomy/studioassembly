@@ -93,7 +93,7 @@ export default function CaerholdDraftEditor() {
       // Then publish
       await publishMutation.mutateAsync(id);
       toast({ title: 'Published!', description: 'Post is now live.' });
-      navigate('/caerhold/admin/drafts');
+      navigate('/admin/caerhold/drafts');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -108,7 +108,7 @@ export default function CaerholdDraftEditor() {
     try {
       await deleteMutation.mutateAsync(id);
       toast({ title: 'Deleted', description: 'Post has been deleted.' });
-      navigate('/caerhold/admin/drafts');
+      navigate('/admin/caerhold/drafts');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -137,7 +137,7 @@ export default function CaerholdDraftEditor() {
     return (
       <div className="text-center py-16">
         <h1 className="text-2xl font-bold mb-4">Draft Not Found</h1>
-        <Link to="/caerhold/admin/drafts" className="text-primary hover:underline">
+        <Link to="/admin/caerhold/drafts" className="text-primary hover:underline">
           Back to Drafts
         </Link>
       </div>
@@ -149,7 +149,7 @@ export default function CaerholdDraftEditor() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/caerhold/admin/drafts">
+            <Link to="/admin/caerhold/drafts">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

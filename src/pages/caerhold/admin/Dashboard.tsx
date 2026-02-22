@@ -18,7 +18,7 @@ export default function CaerholdAdminDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-widest uppercase">Dashboard</h1>
         <Button asChild className="tracking-widest uppercase">
-          <Link to="/caerhold/admin/media">
+          <Link to="/admin/caerhold/media">
             <Upload className="mr-2 h-4 w-4" />
             Upload Media
           </Link>
@@ -82,7 +82,7 @@ export default function CaerholdAdminDashboard() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg tracking-widest uppercase">Drafts Needing Review</CardTitle>
             <Button variant="outline" size="sm" asChild className="tracking-widest uppercase">
-              <Link to="/caerhold/admin/drafts">View All</Link>
+              <Link to="/admin/caerhold/drafts">View All</Link>
             </Button>
           </div>
         </CardHeader>
@@ -94,7 +94,7 @@ export default function CaerholdAdminDashboard() {
               {drafts.slice(0, 5).map((draft) => (
                 <Link
                   key={draft.id}
-                  to={`/caerhold/admin/drafts/${draft.id}`}
+                  to={`/admin/caerhold/drafts/${draft.id}`}
                   className="flex items-center justify-between p-3 border border-border hover:border-primary transition-colors"
                 >
                   <div className="flex items-center gap-3">

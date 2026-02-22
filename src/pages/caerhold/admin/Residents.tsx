@@ -99,7 +99,7 @@ export default function CaerholdAdminResidents() {
         <h1 className="text-2xl font-bold tracking-widest uppercase">Residents</h1>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link to="/caerhold/admin/residents/import">
+            <Link to="/admin/caerhold/residents/import">
               <Upload className="mr-2 h-4 w-4" /> Import from Photos
             </Link>
           </Button>
@@ -154,7 +154,7 @@ export default function CaerholdAdminResidents() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" asChild>
-                        <Link to={`/caerhold/admin/residents/${resident.id}`}>
+                        <Link to={`/admin/caerhold/residents/${resident.id}`}>
                           <Pencil className="h-4 w-4" />
                         </Link>
                       </Button>
