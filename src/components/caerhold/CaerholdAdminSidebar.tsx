@@ -5,6 +5,8 @@ import {
   FileEdit, 
   Users, 
   MapPin,
+  Upload,
+  UserPlus,
   ChevronLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,8 +14,10 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { to: '/caerhold/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/caerhold/admin/media', icon: Image, label: 'Media' },
-  { to: '/caerhold/admin/drafts', icon: FileEdit, label: 'Drafts' },
+  { to: '/caerhold/admin/drafts', icon: FileEdit, label: 'Post Drafts' },
   { to: '/caerhold/admin/residents', icon: Users, label: 'Residents' },
+  { to: '/caerhold/admin/residents/import', icon: Upload, label: 'Import Residents' },
+  { to: '/caerhold/admin/residents/drafts', icon: UserPlus, label: 'Resident Drafts' },
   { to: '/caerhold/admin/locations', icon: MapPin, label: 'Locations' },
 ];
 

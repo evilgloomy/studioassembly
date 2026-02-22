@@ -11,6 +11,9 @@ function mapResident(row: any): CaerholdResident {
     ...row,
     tone_profile: (row.tone_profile || {}) as CaerholdToneProfile,
     canon_rules: (row.canon_rules || {}) as CaerholdCanonRules,
+    personality: row.personality || {},
+    lore_hooks: row.lore_hooks || {},
+    profile_status: row.profile_status || 'draft',
   };
 }
 

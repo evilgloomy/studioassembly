@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CaerholdAdminResidents() {
@@ -97,10 +97,17 @@ export default function CaerholdAdminResidents() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-widest uppercase">Residents</h1>
-        <Button onClick={() => setShowCreateDialog(true)} className="tracking-widest uppercase">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Resident
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/caerhold/admin/residents/import">
+              <Upload className="mr-2 h-4 w-4" /> Import from Photos
+            </Link>
+          </Button>
+          <Button onClick={() => setShowCreateDialog(true)} className="tracking-widest uppercase">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Resident
+          </Button>
+        </div>
       </div>
 
       {/* Residents Table */}
@@ -135,9 +142,14 @@ export default function CaerholdAdminResidents() {
                   <TableCell className="text-muted-foreground">{resident.handle}</TableCell>
                   <TableCell className="text-muted-foreground">{resident.role_title || '—'}</TableCell>
                   <TableCell>
-                    <Badge variant={resident.posting_enabled ? 'default' : 'secondary'}>
-                      {resident.posting_enabled ? 'Active' : 'Disabled'}
-                    </Badge>
+                    <div className="flex gap-1">
+                      <Badge variant={(resident as any).profile_status === 'published' ? 'default' : 'secondary'}>
+                        {(resident as any).profile_status === 'published' ? 'Published' : 'Draft'}
+                      </Badge>
+                      <Badge variant={resident.posting_enabled ? 'default' : 'secondary'}>
+                        {resident.posting_enabled ? 'Active' : 'Disabled'}
+                      </Badge>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
