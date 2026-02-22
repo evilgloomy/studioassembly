@@ -92,7 +92,7 @@ export default function CaerholdAdminDrafts() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" asChild>
-                      <Link to={`/caerhold/admin/drafts/${draft.id}`}>
+                      <Link to={`/admin/caerhold/drafts/${draft.id}`}>
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>

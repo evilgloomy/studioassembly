@@ -10,6 +10,11 @@ import {
   Home,
   PanelTop,
   Info,
+  Landmark,
+  FileEdit,
+  Upload,
+  UserPlus,
+  MapPin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -55,6 +60,16 @@ const navItems = [
   },
 ];
 
+const caerholdNavItems = [
+  { path: '/admin/caerhold', label: 'City Dashboard', icon: Landmark, exact: true },
+  { path: '/admin/caerhold/media', label: 'City Media', icon: Image },
+  { path: '/admin/caerhold/drafts', label: 'Post Drafts', icon: FileEdit },
+  { path: '/admin/caerhold/residents', label: 'Residents', icon: Users, exact: true },
+  { path: '/admin/caerhold/residents/import', label: 'Import Residents', icon: Upload },
+  { path: '/admin/caerhold/residents/drafts', label: 'Resident Drafts', icon: UserPlus },
+  { path: '/admin/caerhold/locations', label: 'Locations', icon: MapPin },
+];
+
 export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuthContext();
@@ -71,6 +86,8 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
   };
 
   const filteredItems = navItems.filter(item => !item.adminOnly || isAdmin);
+
+  const hasCaerholdAccess = isAdmin || role === 'caerhold_admin' || role === 'caerhold_editor';
 
   return (
     <aside
@@ -96,7 +113,7 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1">
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           {filteredItems.map((item) => (
             <Link
               key={item.path}
@@ -116,6 +133,39 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
               )}
             </Link>
           ))}
+
+          {/* Caerhold Section */}
+          {hasCaerholdAccess && (
+            <>
+              {!collapsed && (
+                <div className="pt-4 pb-1 px-3">
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-medium">
+                    Caerhold
+                  </span>
+                </div>
+              )}
+              {collapsed && <div className="border-t border-input my-2" />}
+              {caerholdNavItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-none transition-colors',
+                    'hover:bg-secondary',
+                    isActive(item.path, item.exact) 
+                      ? 'bg-secondary font-medium' 
+                      : 'text-muted-foreground',
+                    collapsed && 'justify-center px-2'
+                  )}
+                >
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  {!collapsed && (
+                    <span className="text-sm tracking-wide uppercase">{item.label}</span>
+                  )}
+                </Link>
+              ))}
+            </>
+          )}
         </nav>
 
         {/* Footer */}

@@ -28,7 +28,7 @@ export default function ResidentDrafts() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-widest uppercase">Draft Residents</h1>
         <Button asChild variant="outline">
-          <Link to="/caerhold/admin/residents/import">
+          <Link to="/admin/caerhold/residents/import">
             <Upload className="mr-2 h-4 w-4" /> Import More
           </Link>
         </Button>
@@ -40,7 +40,7 @@ export default function ResidentDrafts() {
         <div className="text-center py-16 text-muted-foreground">
           <p>No draft residents.</p>
           <Button asChild variant="outline" className="mt-4">
-            <Link to="/caerhold/admin/residents/import">Import from Photos</Link>
+            <Link to="/admin/caerhold/residents/import">Import from Photos</Link>
           </Button>
         </div>
       ) : (
@@ -76,7 +76,7 @@ export default function ResidentDrafts() {
 
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" asChild className="flex-1">
-                  <Link to={`/caerhold/admin/residents/${resident.id}`}>
+                  <Link to={`/admin/caerhold/residents/${resident.id}`}>
                     <Pencil className="mr-1 h-3 w-3" /> Edit
                   </Link>
                 </Button>

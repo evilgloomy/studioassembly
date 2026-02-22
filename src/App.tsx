@@ -36,8 +36,6 @@ import CaerholdLocations from "./pages/caerhold/Locations";
 import CaerholdLocationPage from "./pages/caerhold/LocationPage";
 
 // Caerhold admin pages
-import { CaerholdAdminLayout } from "./components/caerhold/CaerholdAdminLayout";
-import { CaerholdProtectedRoute } from "./components/caerhold/CaerholdProtectedRoute";
 import CaerholdAdminDashboard from "./pages/caerhold/admin/Dashboard";
 import CaerholdAdminMedia from "./pages/caerhold/admin/Media";
 import CaerholdAdminDrafts from "./pages/caerhold/admin/Drafts";
@@ -87,6 +85,17 @@ const App = () => (
               <Route path="media" element={<AdminMedia />} />
               <Route path="pages/:pageSlug" element={<PageEditor />} />
               <Route path="team" element={<ProtectedRoute requiredRole="admin"><AdminTeam /></ProtectedRoute>} />
+
+              {/* Caerhold admin routes */}
+              <Route path="caerhold" element={<CaerholdAdminDashboard />} />
+              <Route path="caerhold/media" element={<CaerholdAdminMedia />} />
+              <Route path="caerhold/drafts" element={<CaerholdAdminDrafts />} />
+              <Route path="caerhold/drafts/:id" element={<CaerholdDraftEditor />} />
+              <Route path="caerhold/residents" element={<CaerholdAdminResidents />} />
+              <Route path="caerhold/residents/import" element={<CaerholdResidentImport />} />
+              <Route path="caerhold/residents/drafts" element={<CaerholdResidentDrafts />} />
+              <Route path="caerhold/residents/:id" element={<CaerholdResidentEditor />} />
+              <Route path="caerhold/locations" element={<CaerholdAdminLocations />} />
             </Route>
 
             {/* Caerhold public routes */}
@@ -97,27 +106,8 @@ const App = () => (
             <Route path="/caerhold/locations" element={<CaerholdLocations />} />
             <Route path="/caerhold/locations/:slug" element={<CaerholdLocationPage />} />
 
-            {/* Caerhold admin routes */}
-            <Route
-              path="/caerhold/admin"
-              element={
-                <CaerholdProtectedRoute>
-                  <CaerholdAdminLayout />
-                </CaerholdProtectedRoute>
-              }
-            >
-              <Route index element={<CaerholdAdminDashboard />} />
-              <Route path="media" element={<CaerholdAdminMedia />} />
-              <Route path="drafts" element={<CaerholdAdminDrafts />} />
-              <Route path="drafts/:id" element={<CaerholdDraftEditor />} />
-              <Route path="residents" element={<CaerholdAdminResidents />} />
-              <Route path="residents/import" element={<CaerholdResidentImport />} />
-              <Route path="residents/drafts" element={<CaerholdResidentDrafts />} />
-              <Route path="residents/:id" element={<CaerholdResidentEditor />} />
-              <Route path="locations" element={<CaerholdAdminLocations />} />
-            </Route>
-
             {/* Redirects */}
+            <Route path="/caerhold/admin/*" element={<Navigate to="/admin/caerhold" replace />} />
             <Route path="/store" element={<Navigate to="/shop" replace />} />
             <Route path="/process" element={<Navigate to="/about" replace />} />
             <Route path="/city" element={<Navigate to="/shop" replace />} />

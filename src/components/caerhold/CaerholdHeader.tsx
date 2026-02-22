@@ -1,14 +1,15 @@
 import { Link } from 'react-router-dom';
 import { MapPin, Newspaper, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCaerholdAuth } from '@/hooks/caerhold/useCaerholdAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 interface CaerholdHeaderProps {
   className?: string;
 }
 
 export function CaerholdHeader({ className }: CaerholdHeaderProps) {
-  const { hasCaerholdAccess } = useCaerholdAuth();
+  const { role, isAdmin } = useAuthContext();
+  const hasCaerholdAccess = isAdmin || role === 'caerhold_admin' || role === 'caerhold_editor';
 
   return (
     <header className={cn('border-b border-border bg-card', className)}>
@@ -43,7 +44,7 @@ export function CaerholdHeader({ className }: CaerholdHeaderProps) {
           </Link>
           {hasCaerholdAccess && (
             <Link 
-              to="/caerhold/admin" 
+              to="/admin/caerhold" 
               className="text-sm tracking-widest uppercase text-primary hover:underline"
             >
               Admin

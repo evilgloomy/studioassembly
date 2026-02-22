@@ -73,7 +73,7 @@ export default function ResidentImport() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-widest uppercase">Import Residents</h1>
         {results.length > 0 && completedCount > 0 && (
-          <Button onClick={() => navigate('/caerhold/admin/residents/drafts')} variant="outline">
+          <Button onClick={() => navigate('/admin/caerhold/residents/drafts')} variant="outline">
             View Drafts <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         )}
