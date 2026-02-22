@@ -320,6 +320,63 @@ export type Database = {
           },
         ]
       }
+      caerhold_resident_profile_jobs: {
+        Row: {
+          created_at: string
+          created_by: string
+          error_message: string
+          id: string
+          job_hash: string
+          media_id: string
+          raw_model_output: Json
+          result_resident_id: string | null
+          status: string
+          updated_at: string
+          upload_batch_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          error_message?: string
+          id?: string
+          job_hash: string
+          media_id: string
+          raw_model_output?: Json
+          result_resident_id?: string | null
+          status?: string
+          updated_at?: string
+          upload_batch_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          error_message?: string
+          id?: string
+          job_hash?: string
+          media_id?: string
+          raw_model_output?: Json
+          result_resident_id?: string | null
+          status?: string
+          updated_at?: string
+          upload_batch_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_resident_profile_jobs_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_resident_profile_jobs_result_resident_id_fkey"
+            columns: ["result_resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caerhold_residents: {
         Row: {
           avatar_media_id: string | null
@@ -327,11 +384,17 @@ export type Database = {
           canon_rules: Json
           created_at: string
           display_name: string
+          first_name: string | null
           handle: string
           id: string
+          last_name: string | null
+          lore_hooks: Json
+          personality: Json
           posting_enabled: boolean
+          profile_status: string
           role_title: string | null
           slug: string
+          source_media_id: string | null
           tone_profile: Json
           updated_at: string
         }
@@ -341,11 +404,17 @@ export type Database = {
           canon_rules?: Json
           created_at?: string
           display_name: string
+          first_name?: string | null
           handle: string
           id?: string
+          last_name?: string | null
+          lore_hooks?: Json
+          personality?: Json
           posting_enabled?: boolean
+          profile_status?: string
           role_title?: string | null
           slug: string
+          source_media_id?: string | null
           tone_profile?: Json
           updated_at?: string
         }
@@ -355,15 +424,28 @@ export type Database = {
           canon_rules?: Json
           created_at?: string
           display_name?: string
+          first_name?: string | null
           handle?: string
           id?: string
+          last_name?: string | null
+          lore_hooks?: Json
+          personality?: Json
           posting_enabled?: boolean
+          profile_status?: string
           role_title?: string | null
           slug?: string
+          source_media_id?: string | null
           tone_profile?: Json
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "caerhold_residents_source_media_id_fkey"
+            columns: ["source_media_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_media"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_avatar_media"
             columns: ["avatar_media_id"]

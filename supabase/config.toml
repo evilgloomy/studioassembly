@@ -2,3 +2,6 @@ project_id = "msyzendpmglppopeaucs"
 
 [functions.generate-summary]
 verify_jwt = true
+
+[functions.generate-resident-profile]
+verify_jwt = false

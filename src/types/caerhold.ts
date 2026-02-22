@@ -35,6 +35,12 @@ export interface CaerholdResident {
   handle: string;
   role_title: string | null;
   bio: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  personality: Record<string, any>;
+  lore_hooks: Record<string, any>;
+  profile_status: 'draft' | 'published';
+  source_media_id: string | null;
   tone_profile: CaerholdToneProfile;
   canon_rules: CaerholdCanonRules;
   posting_enabled: boolean;
@@ -148,6 +154,12 @@ export interface CaerholdResidentInput {
   handle: string;
   role_title?: string | null;
   bio?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  personality?: Record<string, any>;
+  lore_hooks?: Record<string, any>;
+  profile_status?: 'draft' | 'published';
+  source_media_id?: string | null;
   tone_profile?: CaerholdToneProfile;
   canon_rules?: CaerholdCanonRules;
   posting_enabled?: boolean;

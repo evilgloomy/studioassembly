@@ -44,6 +44,9 @@ import CaerholdAdminDrafts from "./pages/caerhold/admin/Drafts";
 import CaerholdDraftEditor from "./pages/caerhold/admin/DraftEditor";
 import CaerholdAdminResidents from "./pages/caerhold/admin/Residents";
 import CaerholdAdminLocations from "./pages/caerhold/admin/Locations";
+import CaerholdResidentImport from "./pages/caerhold/admin/ResidentImport";
+import CaerholdResidentDrafts from "./pages/caerhold/admin/ResidentDrafts";
+import CaerholdResidentEditor from "./pages/caerhold/admin/ResidentEditor";
 
 const queryClient = new QueryClient();
 
@@ -108,6 +111,9 @@ const App = () => (
               <Route path="drafts" element={<CaerholdAdminDrafts />} />
               <Route path="drafts/:id" element={<CaerholdDraftEditor />} />
               <Route path="residents" element={<CaerholdAdminResidents />} />
+              <Route path="residents/import" element={<CaerholdResidentImport />} />
+              <Route path="residents/drafts" element={<CaerholdResidentDrafts />} />
+              <Route path="residents/:id" element={<CaerholdResidentEditor />} />
               <Route path="locations" element={<CaerholdAdminLocations />} />
             </Route>
 
