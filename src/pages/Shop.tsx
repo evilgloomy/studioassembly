@@ -7,7 +7,7 @@ const Shop = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="pt-48 pb-24">
+      <main className="pt-28 pb-16">
         <div className="section-padding">
           <div className="max-w-6xl mx-auto">
             {/* Page Header */}
