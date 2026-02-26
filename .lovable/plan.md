@@ -1,86 +1,73 @@
 
 
-# Merge Caerhold Admin into Studio Assembly Admin
+# Enhance Caerhold Resident Diversity Prompts
 
 ## Overview
 
-Move all Caerhold admin pages from `/caerhold/admin/*` into the main `/admin/*` panel. This eliminates the separate Caerhold admin layout, sidebar, and protected route -- everything is managed under the existing Studio Assembly admin infrastructure.
-
----
+Update the AI system and user prompts in the `generate-resident-profile` edge function to explicitly guide the model toward generating diverse character backgrounds, occupations, districts, and personality types -- ensuring the fictional city represents a wide range of identities.
 
 ## Changes
 
-### 1. Update Main Admin Sidebar
+### 1. Update System Prompt (lines 94-102)
 
-Add a "Caerhold" section to `src/components/admin/AdminSidebar.tsx` with the following nav items (grouped under a section divider/header):
+Add diversity guidance to the system prompt:
 
-| Label | Path | Icon |
-|-------|------|------|
-| **City Dashboard** | `/admin/caerhold` | `Landmark` |
-| **City Media** | `/admin/caerhold/media` | `Image` |
-| **Post Drafts** | `/admin/caerhold/drafts` | `FileEdit` |
-| **Residents** | `/admin/caerhold/residents` | `Users` |
-| **Import Residents** | `/admin/caerhold/residents/import` | `Upload` |
-| **Resident Drafts** | `/admin/caerhold/residents/drafts` | `UserPlus` |
-| **Locations** | `/admin/caerhold/locations` | `MapPin` |
+```
+You are a creative worldbuilder for the City of Caerhold, a fictional LEGO/minifigure city.
+You analyze minifigure portrait photos and generate rich character profiles for city residents.
 
-These will appear below a "CAERHOLD" section label, only visible to users with admin, caerhold_admin, or caerhold_editor roles.
+DIVERSITY PRINCIPLES:
+- Caerhold is a vibrant, inclusive city with residents from all walks of life
+- Vary cultural backgrounds, age groups, gender identities, family structures,
+  and ability levels across the population
+- Occupations should span blue-collar, white-collar, creative, civic, academic,
+  trade, service, and unconventional roles -- avoid defaulting to stereotypical
+  jobs based on appearance
+- Personality types should range widely: introverts and extroverts, optimists and
+  realists, traditionalists and innovators
+- Districts, affiliations, and interests should reflect diverse lifestyles --
+  not every resident is a shopkeeper or office worker
+- When design cues are ambiguous, lean into unexpected or underrepresented
+  character archetypes rather than defaults
 
-### 2. Update Route Registration in App.tsx
-
-Move all Caerhold admin routes from the separate `/caerhold/admin` route group into the existing `/admin` route group:
-
-```text
-/admin/caerhold              -> CaerholdAdminDashboard
-/admin/caerhold/media        -> CaerholdAdminMedia
-/admin/caerhold/drafts       -> CaerholdAdminDrafts
-/admin/caerhold/drafts/:id   -> CaerholdDraftEditor
-/admin/caerhold/residents    -> CaerholdAdminResidents
-/admin/caerhold/residents/import  -> CaerholdResidentImport
-/admin/caerhold/residents/drafts  -> CaerholdResidentDrafts
-/admin/caerhold/residents/:id     -> CaerholdResidentEditor
-/admin/caerhold/locations    -> CaerholdAdminLocations
+STRICT CONSTRAINTS:
+- Never claim the character is a real person
+- Never include sexual, violent, or illegal content
+- Keep everything municipal, wholesome, and city-life oriented
+- Only infer traits from visible design cues in the photo
+- Do not assume backstory beyond what fits the minifig design cues
+- All names must be fictional and original
+- Names should reflect a variety of cultural origins
 ```
 
-Remove the entire `/caerhold/admin` route group and its `CaerholdProtectedRoute` + `CaerholdAdminLayout` wrappers.
+### 2. Update User Prompt (lines 104-108)
 
-### 3. Update Internal Links in Caerhold Admin Pages
+Add a reminder in the user prompt to consider diversity in the context of the broader city population:
 
-All Caerhold admin pages currently link to `/caerhold/admin/...`. These need updating to `/admin/caerhold/...`:
+```
+Analyze this LEGO minifigure portrait photo and generate a complete resident
+profile for the City of Caerhold.
 
-- `src/pages/caerhold/admin/Dashboard.tsx` - links to media, drafts
-- `src/pages/caerhold/admin/Drafts.tsx` - links to draft editor
-- `src/pages/caerhold/admin/Residents.tsx` - links to import, individual residents
-- `src/pages/caerhold/admin/ResidentDrafts.tsx` - links to resident editor
-- `src/pages/caerhold/admin/ResidentImport.tsx` - links to drafts
-- `src/pages/caerhold/admin/ResidentEditor.tsx` - links back to residents
-- `src/pages/caerhold/admin/DraftEditor.tsx` - links back to drafts
+Look at the minifigure's clothing, accessories, hair, expression, and any
+visible items to infer their character.
 
-### 4. Update Auth / Access Control
+Remember: Caerhold is a diverse city. Consider giving this resident a background,
+occupation, or perspective that adds variety to the population. Avoid defaulting
+to the most obvious interpretation if a more interesting, underrepresented
+reading is equally supported by the visual cues.
+```
 
-The existing `ProtectedRoute` wrapping `/admin` already ensures authentication. For Caerhold-specific pages, no extra protection is needed beyond what the main admin route provides -- RLS on the database tables already restricts data access to `caerhold_admin`/`caerhold_editor` roles.
+### 3. Expand Tool Schema Options
 
-The `get_user_role` function currently only returns the highest-priority role among `admin`, `editor`, `author`. It needs to also handle `caerhold_admin` and `caerhold_editor` so the sidebar can conditionally show Caerhold links. The `hasContentRole` check should also include these Caerhold roles so users with only a Caerhold role can access `/admin`.
+Broaden the `voiceStyle` enum in the tone_profile to include more diverse communication styles:
 
-### 5. Files No Longer Needed
+Current: `["formal", "casual", "poetic", "dry", "warm", "chaotic", "quiet"]`
 
-These files become unused and can be removed:
-- `src/components/caerhold/CaerholdAdminLayout.tsx`
-- `src/components/caerhold/CaerholdAdminSidebar.tsx`
-- `src/components/caerhold/CaerholdProtectedRoute.tsx`
-- `src/hooks/caerhold/useCaerholdAuth.ts`
+Updated: `["formal", "casual", "poetic", "dry", "warm", "chaotic", "quiet", "earnest", "sardonic", "gentle", "boisterous"]`
 
-### 6. Update `get_user_role` Database Function
+## Technical Details
 
-The current function only prioritizes `admin > editor > author`. It needs to include `caerhold_admin` and `caerhold_editor` in its priority ordering so that users with these roles get a non-null result, which in turn makes `hasContentRole = true` and grants access to the admin panel.
-
----
-
-## Summary of Impact
-
-- Single admin panel for everything -- no separate login or layout for Caerhold
-- Caerhold nav items appear as a grouped section in the existing sidebar
-- All existing Caerhold admin functionality preserved, just re-routed
-- Caerhold roles (`caerhold_admin`, `caerhold_editor`) gain access to the main admin shell
-- Database RLS continues to enforce data-level access control
+- Single file change: `supabase/functions/generate-resident-profile/index.ts`
+- Only prompt text and one enum array are modified -- no schema or database changes
+- The edge function will be redeployed automatically
 
