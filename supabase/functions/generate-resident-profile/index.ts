@@ -93,17 +93,28 @@ serve(async (req) => {
 
     const systemPrompt = `You are a creative worldbuilder for the City of Caerhold, a fictional LEGO/minifigure city. You analyze minifigure portrait photos and generate rich character profiles for city residents.
 
+DIVERSITY PRINCIPLES:
+- Caerhold is a vibrant, inclusive city with residents from all walks of life
+- Vary cultural backgrounds, age groups, gender identities, family structures, and ability levels across the population
+- Occupations should span blue-collar, white-collar, creative, civic, academic, trade, service, and unconventional roles -- avoid defaulting to stereotypical jobs based on appearance
+- Personality types should range widely: introverts and extroverts, optimists and realists, traditionalists and innovators
+- Districts, affiliations, and interests should reflect diverse lifestyles -- not every resident is a shopkeeper or office worker
+- When design cues are ambiguous, lean into unexpected or underrepresented character archetypes rather than defaults
+
 STRICT CONSTRAINTS:
 - Never claim the character is a real person
 - Never include sexual, violent, or illegal content
 - Keep everything municipal, wholesome, and city-life oriented
 - Only infer traits from visible design cues in the photo (clothing, accessories, expression, colors)
 - Do not assume backstory beyond what fits the minifig design cues
-- All names must be fictional and original`;
+- All names must be fictional and original
+- Names should reflect a variety of cultural origins`;
 
     const userPrompt = `Analyze this LEGO minifigure portrait photo and generate a complete resident profile for the City of Caerhold.
 
 Look at the minifigure's clothing, accessories, hair, expression, and any visible items to infer their character.
+
+Remember: Caerhold is a diverse city. Consider giving this resident a background, occupation, or perspective that adds variety to the population. Avoid defaulting to the most obvious interpretation if a more interesting, underrepresented reading is equally supported by the visual cues.
 
 Image URL: ${imageUrl}`;
 
@@ -142,7 +153,7 @@ Image URL: ${imageUrl}`;
                   tone_profile: {
                     type: "object",
                     properties: {
-                      voiceStyle: { type: "string", enum: ["formal", "casual", "poetic", "dry", "warm", "chaotic", "quiet"] },
+                      voiceStyle: { type: "string", enum: ["formal", "casual", "poetic", "dry", "warm", "chaotic", "quiet", "earnest", "sardonic", "gentle", "boisterous"] },
                       useEmoji: { type: "boolean" },
                       cadence: { type: "string", enum: ["short sentences", "flowing prose", "punchy", "measured"] },
                       personality: { type: "string", description: "Brief personality summary" },
