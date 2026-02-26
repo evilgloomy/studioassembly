@@ -6,12 +6,12 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="pt-32 pb-24">
+      <main className="pt-24 pb-16">
         <div className="section-padding">
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               {/* Contact Info */}
-              <div className="space-y-8">
+              <div className="space-y-6">
                 <h1 className="text-3xl md:text-4xl font-bold tracking-widest uppercase">
                   CONTACT
                 </h1>
