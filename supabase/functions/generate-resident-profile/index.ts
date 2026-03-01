@@ -108,11 +108,18 @@ STRICT CONSTRAINTS:
 - Only infer traits from visible design cues in the photo (clothing, accessories, expression, colors)
 - Do not assume backstory beyond what fits the minifig design cues
 - All names must be fictional and original
-- Names should reflect a variety of cultural origins`;
+- Names should reflect a variety of cultural origins
+
+CHILD DETECTION:
+- If the minifigure has short/stubby legs (the classic LEGO child leg piece, noticeably shorter than standard adult legs), set is_child to true
+- Child characters should have age-appropriate occupations (student, young explorer, aspiring artist, etc.)
+- Their bio should reflect youthful energy, curiosity, school life, playgrounds, or family
+- Personality should be age-appropriate: imaginative, curious, playful, sometimes shy or mischievous
+- Tone should reflect a child's perspective on city life`;
 
     const userPrompt = `Analyze this LEGO minifigure portrait photo and generate a complete resident profile for the City of Caerhold.
 
-Look at the minifigure's clothing, accessories, hair, expression, and any visible items to infer their character.
+Look at the minifigure's clothing, accessories, hair, expression, and any visible items to infer their character. Pay special attention to the legs: if they are short/stubby (child-sized leg piece), this is a child minifigure and should be flagged as is_child=true with an age-appropriate profile.
 
 Remember: Caerhold is a diverse city. Consider giving this resident a background, occupation, or perspective that adds variety to the population. Avoid defaulting to the most obvious interpretation if a more interesting, underrepresented reading is equally supported by the visual cues.
 
@@ -187,8 +194,12 @@ Image URL: ${imageUrl}`;
                     },
                     required: ["allowed_topics", "forbiddenClaims", "grounding_rule"],
                   },
+                  is_child: {
+                    type: "boolean",
+                    description: "True if the minifigure has short/stubby legs indicating a child character",
+                  },
                 },
-                required: ["first_name", "last_name", "handle", "occupation", "bio", "tone_profile", "personality", "lore_hooks", "canon_rules"],
+                required: ["first_name", "last_name", "handle", "occupation", "bio", "tone_profile", "personality", "lore_hooks", "canon_rules", "is_child"],
                 additionalProperties: false,
               },
             },
@@ -256,6 +267,7 @@ Image URL: ${imageUrl}`;
             ...profile.canon_rules,
             grounding_rule: `This character was generated from media_id ${job.media_id}. Future posts must only reference tagged media or admin notes.`,
           },
+          is_child: profile.is_child ?? false,
         })
         .eq("id", job.result_resident_id);
 
@@ -295,6 +307,7 @@ Image URL: ${imageUrl}`;
         profile_status: "draft",
         source_media_id: job.media_id,
         avatar_media_id: job.media_id,
+        is_child: profile.is_child ?? false,
       })
       .select("id")
       .single();

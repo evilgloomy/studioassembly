@@ -387,6 +387,7 @@ export type Database = {
           first_name: string | null
           handle: string
           id: string
+          is_child: boolean
           last_name: string | null
           lore_hooks: Json
           personality: Json
@@ -407,6 +408,7 @@ export type Database = {
           first_name?: string | null
           handle: string
           id?: string
+          is_child?: boolean
           last_name?: string | null
           lore_hooks?: Json
           personality?: Json
@@ -427,6 +429,7 @@ export type Database = {
           first_name?: string | null
           handle?: string
           id?: string
+          is_child?: boolean
           last_name?: string | null
           lore_hooks?: Json
           personality?: Json

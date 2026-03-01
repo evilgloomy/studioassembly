@@ -1,0 +1,1 @@
+ALTER TABLE public.caerhold_residents ADD COLUMN is_child boolean NOT NULL DEFAULT false;
