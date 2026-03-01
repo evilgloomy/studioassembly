@@ -44,6 +44,7 @@ export interface CaerholdResident {
   tone_profile: CaerholdToneProfile;
   canon_rules: CaerholdCanonRules;
   posting_enabled: boolean;
+  is_child: boolean;
   avatar_media_id: string | null;
   created_at: string;
   updated_at: string;
@@ -163,6 +164,7 @@ export interface CaerholdResidentInput {
   tone_profile?: CaerholdToneProfile;
   canon_rules?: CaerholdCanonRules;
   posting_enabled?: boolean;
+  is_child?: boolean;
   avatar_media_id?: string | null;
 }
 

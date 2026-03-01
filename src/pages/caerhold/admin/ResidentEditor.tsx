@@ -38,6 +38,7 @@ export default function ResidentEditor() {
         role_title: resident.role_title || '',
         bio: resident.bio || '',
         posting_enabled: resident.posting_enabled,
+        is_child: (resident as any).is_child ?? false,
         tone_profile: resident.tone_profile || {},
         personality: (resident as any).personality || {},
         lore_hooks: (resident as any).lore_hooks || {},
@@ -69,6 +70,7 @@ export default function ResidentEditor() {
         .update({
           first_name: form.first_name || null,
           last_name: form.last_name || null,
+          is_child: form.is_child ?? false,
           personality: form.personality,
           lore_hooks: form.lore_hooks,
         })
@@ -220,6 +222,13 @@ export default function ResidentEditor() {
         <div className="space-y-2">
           <Label className="text-xs tracking-widest uppercase">Occupation</Label>
           <Input value={form.role_title || ''} onChange={e => updateField('role_title', e.target.value)} />
+        </div>
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={form.is_child || false}
+            onCheckedChange={v => updateField('is_child', v)}
+          />
+          <Label className="text-xs tracking-widest uppercase">Is Child</Label>
         </div>
         <div className="space-y-2">
           <Label className="text-xs tracking-widest uppercase">Bio</Label>
