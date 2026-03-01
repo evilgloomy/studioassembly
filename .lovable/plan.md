@@ -1,20 +1,32 @@
 
-# Preserve Short Legs (Child Figures) in Portrait Standardization
+
+# Guarantee Pure White Background via Post-Processing
 
 ## Problem
 
-The current prompt tells the AI to maintain "1:1 fidelity" but doesn't explicitly call out leg length. The model defaults to rendering standard long-leg minifigures every time, even when the source photo shows a child figure with short/stubby legs.
+The AI prompt already asks for a #FFFFFF white background, but the model doesn't always comply perfectly -- some renders come back with slightly grey or off-white backdrops. Prompt tweaks alone can't guarantee pixel-perfect results every time.
 
 ## Solution
 
-Add an explicit instruction to the `STANDARDIZE_PROMPT` that tells the model to carefully observe the leg type in the reference image and reproduce it exactly -- short stubby legs for child figures, standard long legs for adult figures.
+Add a **post-processing step** after the AI generates the image but before uploading it to storage. This step will scan every pixel and force any near-white pixels (above a brightness threshold) to pure #FFFFFF white. This guarantees the background blends seamlessly with the website regardless of what the AI produces.
 
-## Updated Prompt
+The approach:
+1. Decode the AI-generated PNG into raw pixel data
+2. For each pixel, if R, G, and B are all above a threshold (e.g., 220), set them to 255 (pure white)
+3. Re-encode to PNG and upload
 
-The key addition (bolded for clarity) within the fidelity instruction:
-
-> "...Maintain absolute 1:1 fidelity to every detail in the reference: exact hair mould, precise facial print, all torso and leg printing, and any accessories. **Pay close attention to the leg type: if the reference shows short, stubby legs (indicating a child minifigure), the render MUST use short legs -- do NOT replace them with standard full-length adult legs.** The minifigure should be standing in a neutral pose..."
+Since Deno doesn't have Canvas natively, we'll use a lightweight approach: decode the base64 image, use a simple pixel manipulation library, and re-encode. We'll use the `imagescript` Deno library which supports PNG read/write and per-pixel operations without needing a full Canvas API.
 
 ## Technical Details
 
-**File:** `supabase/functions/standardize-portrait/index.ts` -- update the `STANDARDIZE_PROMPT` constant on line 10 to include the leg-type instruction, then redeploy.
+**File:** `supabase/functions/standardize-portrait/index.ts`
+
+Changes:
+1. Import `Image` from `imagescript` (a Deno-native image processing library)
+2. After receiving the base64 image from the AI (step 3 in current code), decode it into an `Image` object
+3. Iterate over all pixels -- if R >= 220, G >= 220, and B >= 220, set the pixel to (255, 255, 255, 255)
+4. Re-encode to PNG bytes
+5. Upload the cleaned image instead of the raw AI output
+
+This threshold-based whitening preserves the minifigure's colors and details while ensuring any near-white background area becomes pure white, matching the website background perfectly.
+
