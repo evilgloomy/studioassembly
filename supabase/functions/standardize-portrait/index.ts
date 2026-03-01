@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -90,10 +91,27 @@ serve(async (req) => {
     // 3. Decode base64 to binary
     const base64Data = imageDataUrl.replace(/^data:image\/\w+;base64,/, "");
     const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
+    const rawBytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+      rawBytes[i] = binaryString.charCodeAt(i);
     }
+
+    // 3b. Post-process: force near-white pixels to pure white
+    console.log("Post-processing: forcing near-white pixels to #FFFFFF");
+    const img = await Image.decode(rawBytes);
+    const THRESHOLD = 220;
+    for (let x = 1; x <= img.width; x++) {
+      for (let y = 1; y <= img.height; y++) {
+        const pixel = img.getPixelAt(x, y);
+        const r = (pixel >> 24) & 0xFF;
+        const g = (pixel >> 16) & 0xFF;
+        const b = (pixel >> 8) & 0xFF;
+        if (r >= THRESHOLD && g >= THRESHOLD && b >= THRESHOLD) {
+          img.setPixelAt(x, y, 0xFFFFFFFF); // pure white, full alpha
+        }
+      }
+    }
+    const bytes = await img.encode();
 
     // 4. Upload to storage
     const portraitFileName = `portrait_${crypto.randomUUID()}.png`;
