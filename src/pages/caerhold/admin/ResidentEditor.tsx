@@ -129,6 +129,13 @@ export default function ResidentEditor() {
         </Badge>
       </div>
 
+      {/* Portrait */}
+      {(resident as any).avatar_url && (
+        <div className="border border-border p-6 flex justify-center">
+          <img src={(resident as any).avatar_url} alt={resident.display_name} className="max-h-64 rounded object-contain" />
+        </div>
+      )}
+
       {/* Basic Info */}
       <section className="space-y-4 border border-border p-6">
         <h2 className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Identity</h2>

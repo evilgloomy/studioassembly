@@ -7,6 +7,7 @@ const QUERY_KEY = ['caerhold', 'residents'];
 
 // Helper to convert database row to typed CaerholdResident
 function mapResident(row: any): CaerholdResident {
+  const avatarUrl = row.avatar_media?.public_url || row.source_media?.public_url || null;
   return {
     ...row,
     tone_profile: (row.tone_profile || {}) as CaerholdToneProfile,
@@ -14,6 +15,7 @@ function mapResident(row: any): CaerholdResident {
     personality: row.personality || {},
     lore_hooks: row.lore_hooks || {},
     profile_status: row.profile_status || 'draft',
+    avatar_url: avatarUrl,
   };
 }
 
@@ -23,7 +25,7 @@ export function useCaerholdResidents() {
     queryFn: async (): Promise<CaerholdResident[]> => {
       const { data, error } = await supabase
         .from('caerhold_residents')
-        .select('*')
+        .select('*, avatar_media:caerhold_media!fk_avatar_media(public_url), source_media:caerhold_media!caerhold_residents_source_media_id_fkey(public_url)')
         .order('display_name');
 
       if (error) throw error;
@@ -38,7 +40,7 @@ export function useCaerholdResident(slug: string) {
     queryFn: async (): Promise<CaerholdResident | null> => {
       const { data, error } = await supabase
         .from('caerhold_residents')
-        .select('*')
+        .select('*, avatar_media:caerhold_media!fk_avatar_media(public_url), source_media:caerhold_media!caerhold_residents_source_media_id_fkey(public_url)')
         .eq('slug', slug)
         .maybeSingle();
 
@@ -55,7 +57,7 @@ export function useCaerholdResidentById(id: string) {
     queryFn: async (): Promise<CaerholdResident | null> => {
       const { data, error } = await supabase
         .from('caerhold_residents')
-        .select('*')
+        .select('*, avatar_media:caerhold_media!fk_avatar_media(public_url), source_media:caerhold_media!caerhold_residents_source_media_id_fkey(public_url)')
         .eq('id', id)
         .maybeSingle();
 
