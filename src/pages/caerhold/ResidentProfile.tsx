@@ -145,12 +145,12 @@ export default function CaerholdResidentProfile() {
           <img
             src={botanicalLeaves}
             alt=""
-            className="absolute -left-16 top-1/2 -translate-y-1/2 w-32 h-32 opacity-30 pointer-events-none hidden lg:block"
+            className="absolute -left-24 top-1/2 -translate-y-1/2 w-64 h-64 opacity-40 pointer-events-none hidden lg:block"
           />
           <img
             src={botanicalLeaves}
             alt=""
-            className="absolute -right-16 top-1/2 -translate-y-1/2 w-32 h-32 opacity-30 pointer-events-none hidden lg:block scale-x-[-1]"
+            className="absolute -right-24 top-1/2 -translate-y-1/2 w-64 h-64 opacity-40 pointer-events-none hidden lg:block scale-x-[-1]"
           />
           <p className="text-foreground leading-relaxed text-lg text-center">{resident.bio}</p>
         </div>
