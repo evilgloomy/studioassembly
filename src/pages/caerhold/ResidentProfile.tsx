@@ -5,6 +5,17 @@ import { useParams, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import type { CaerholdCanonRules } from '@/types/caerhold';
 import heroBanner from '@/assets/hero-city.jpg';
+import botanicalLeft from '@/assets/botanical-left.png';
+import botanicalRight from '@/assets/botanical-right.png';
+
+const TRAIT_COLORS = [
+  'hsl(122, 39%, 49%)',  // soft green
+  'hsl(174, 59%, 40%)',  // teal
+  'hsl(88, 50%, 48%)',   // olive
+  'hsl(122, 47%, 33%)',  // forest
+  'hsl(158, 42%, 43%)',  // emerald
+  'hsl(142, 36%, 52%)',  // sage
+];
 
 function DetailCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -76,7 +87,6 @@ export default function CaerholdResidentProfile() {
   const personality = resident.personality as Record<string, any>;
   const loreHooks = resident.lore_hooks as Record<string, any>;
   const canonRules = resident.canon_rules as CaerholdCanonRules;
-  const portraits = (resident as any).portraits || [];
 
   const personalityTraits = personality?.traits || personality?.keywords || [];
   const hasPersonality = Array.isArray(personalityTraits) && personalityTraits.length > 0;
@@ -98,16 +108,16 @@ export default function CaerholdResidentProfile() {
       </div>
 
       {/* Overlapping Portrait Card */}
-      <div className="flex justify-center -mt-36 relative z-10 px-4">
+      <div className="flex justify-center -mt-44 relative z-10 px-4">
         <div className="rounded-2xl bg-card shadow-lg p-3 border border-border">
           {(resident as any).avatar_url ? (
             <img
               src={(resident as any).avatar_url}
               alt={resident.display_name}
-              className="w-[280px] h-[280px] object-contain rounded-xl"
+              className="w-[320px] h-[380px] object-cover object-top rounded-xl"
             />
           ) : (
-            <div className="w-[280px] h-[280px] bg-secondary flex items-center justify-center text-6xl font-bold rounded-xl">
+            <div className="w-[320px] h-[380px] bg-secondary flex items-center justify-center text-6xl font-bold rounded-xl">
               {resident.display_name[0]}
             </div>
           )}
@@ -128,9 +138,19 @@ export default function CaerholdResidentProfile() {
         )}
       </div>
 
-      {/* Bio */}
+      {/* Bio with Botanical Decorations */}
       {resident.bio && (
-        <div className="max-w-2xl mx-auto mt-8 px-4">
+        <div className="relative max-w-2xl mx-auto mt-8 px-4">
+          <img
+            src={botanicalLeft}
+            alt=""
+            className="absolute -left-16 top-1/2 -translate-y-1/2 w-32 h-32 opacity-30 pointer-events-none hidden lg:block"
+          />
+          <img
+            src={botanicalRight}
+            alt=""
+            className="absolute -right-16 top-1/2 -translate-y-1/2 w-32 h-32 opacity-30 pointer-events-none hidden lg:block"
+          />
           <p className="text-foreground leading-relaxed text-lg text-center">{resident.bio}</p>
         </div>
       )}
@@ -142,9 +162,13 @@ export default function CaerholdResidentProfile() {
             <DetailCard title="Personality">
               <div className="flex flex-wrap gap-2">
                 {personalityTraits.map((trait: string, i: number) => (
-                  <Badge key={i} variant="secondary" className="rounded-full px-3 py-1">
+                  <span
+                    key={i}
+                    className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-white"
+                    style={{ backgroundColor: TRAIT_COLORS[i % TRAIT_COLORS.length] }}
+                  >
                     {trait}
-                  </Badge>
+                  </span>
                 ))}
               </div>
             </DetailCard>
@@ -177,21 +201,6 @@ export default function CaerholdResidentProfile() {
               </ul>
             </DetailCard>
           )}
-        </div>
-      )}
-
-      {/* Portrait Gallery */}
-      {portraits.length > 1 && (
-        <div className="max-w-2xl mx-auto mt-10 px-4">
-          <h2 className="text-xs font-bold tracking-widest uppercase text-muted-foreground mb-4">Portraits</h2>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-            {portraits.map((p: any) => (
-              <div key={p.id} className="rounded-xl border border-border overflow-hidden">
-                <img src={p.public_url} alt={p.label} className="w-full aspect-square object-contain bg-secondary" />
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground text-center py-1">{p.label}</p>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
