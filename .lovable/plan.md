@@ -1,73 +1,61 @@
 
 
-# Enhance Caerhold Resident Diversity Prompts
+# Add "Is Child" Toggle for Caerhold Residents
 
 ## Overview
 
-Update the AI system and user prompts in the `generate-resident-profile` edge function to explicitly guide the model toward generating diverse character backgrounds, occupations, districts, and personality types -- ensuring the fictional city represents a wide range of identities.
+Add a boolean `is_child` column to the `caerhold_residents` table and integrate it into the AI profile generation and the admin editor. When the AI analyzes a minifig photo, it will detect shorter legs (a hallmark of LEGO child figures) and set this flag. The generated bio and personality will reflect a child character. Admins can also manually toggle this in the editor.
 
 ## Changes
 
-### 1. Update System Prompt (lines 94-102)
+### 1. Database Migration
 
-Add diversity guidance to the system prompt:
+Add a new `is_child` boolean column to `caerhold_residents`:
 
-```
-You are a creative worldbuilder for the City of Caerhold, a fictional LEGO/minifigure city.
-You analyze minifigure portrait photos and generate rich character profiles for city residents.
-
-DIVERSITY PRINCIPLES:
-- Caerhold is a vibrant, inclusive city with residents from all walks of life
-- Vary cultural backgrounds, age groups, gender identities, family structures,
-  and ability levels across the population
-- Occupations should span blue-collar, white-collar, creative, civic, academic,
-  trade, service, and unconventional roles -- avoid defaulting to stereotypical
-  jobs based on appearance
-- Personality types should range widely: introverts and extroverts, optimists and
-  realists, traditionalists and innovators
-- Districts, affiliations, and interests should reflect diverse lifestyles --
-  not every resident is a shopkeeper or office worker
-- When design cues are ambiguous, lean into unexpected or underrepresented
-  character archetypes rather than defaults
-
-STRICT CONSTRAINTS:
-- Never claim the character is a real person
-- Never include sexual, violent, or illegal content
-- Keep everything municipal, wholesome, and city-life oriented
-- Only infer traits from visible design cues in the photo
-- Do not assume backstory beyond what fits the minifig design cues
-- All names must be fictional and original
-- Names should reflect a variety of cultural origins
+```sql
+ALTER TABLE public.caerhold_residents
+  ADD COLUMN is_child boolean NOT NULL DEFAULT false;
 ```
 
-### 2. Update User Prompt (lines 104-108)
+No RLS changes needed -- existing policies cover all columns.
 
-Add a reminder in the user prompt to consider diversity in the context of the broader city population:
+### 2. Edge Function: `generate-resident-profile/index.ts`
 
+**System prompt update** -- add child-detection guidance:
+- Instruct the AI to look for shorter/stubby legs (the key visual indicator of a LEGO child minifigure)
+- When detected, the bio, occupation, and personality should reflect a child (e.g., student, young dreamer, mentions school or playground)
+
+**Tool schema update** -- add `is_child` to the function parameters:
+```json
+"is_child": {
+  "type": "boolean",
+  "description": "True if the minifigure has short/stubby legs indicating a child character"
+}
 ```
-Analyze this LEGO minifigure portrait photo and generate a complete resident
-profile for the City of Caerhold.
 
-Look at the minifigure's clothing, accessories, hair, expression, and any
-visible items to infer their character.
+Add `is_child` to the `required` array.
 
-Remember: Caerhold is a diverse city. Consider giving this resident a background,
-occupation, or perspective that adds variety to the population. Avoid defaulting
-to the most obvious interpretation if a more interesting, underrepresented
-reading is equally supported by the visual cues.
-```
+**Resident insert/update** -- pass `profile.is_child` when creating or updating the resident record.
 
-### 3. Expand Tool Schema Options
+### 3. Resident Editor: `src/pages/caerhold/admin/ResidentEditor.tsx`
 
-Broaden the `voiceStyle` enum in the tone_profile to include more diverse communication styles:
+- Load `is_child` into the form state from the resident data
+- Add a toggle in the Identity section: "Is Child" switch
+- Save `is_child` alongside the other direct fields (in the `supabase.update` call)
 
-Current: `["formal", "casual", "poetic", "dry", "warm", "chaotic", "quiet"]`
+### 4. TypeScript Types: `src/types/caerhold.ts`
 
-Updated: `["formal", "casual", "poetic", "dry", "warm", "chaotic", "quiet", "earnest", "sardonic", "gentle", "boisterous"]`
+- Add `is_child: boolean` to `CaerholdResident` interface
+- Add `is_child?: boolean` to `CaerholdResidentInput` interface
 
-## Technical Details
+### 5. Public Profile (optional display)
 
-- Single file change: `supabase/functions/generate-resident-profile/index.ts`
-- Only prompt text and one enum array are modified -- no schema or database changes
-- The edge function will be redeployed automatically
+No changes needed for the public profile page -- the bio text itself will reflect whether the character is a child, so no separate UI indicator is required.
+
+## Technical Summary
+
+- **Database**: 1 migration adding `is_child boolean NOT NULL DEFAULT false`
+- **Edge function**: Prompt and schema updates in `generate-resident-profile/index.ts`, plus passing the field on insert/update
+- **Frontend**: Form state + toggle in `ResidentEditor.tsx`
+- **Types**: 2 small additions to `src/types/caerhold.ts`
 
