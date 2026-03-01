@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCaerholdResidents, useCreateCaerholdResident, useDeleteCaerholdResident } from '@/hooks/caerhold/useCaerholdResidents';
+import { useCaerholdResidents, useCreateCaerholdResident, useDeleteCaerholdResident, useUpdateCaerholdResident } from '@/hooks/caerhold/useCaerholdResidents';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,7 +50,20 @@ export default function CaerholdAdminResidents() {
   const { data: residents, isLoading } = useCaerholdResidents();
   const createMutation = useCreateCaerholdResident();
   const deleteMutation = useDeleteCaerholdResident();
+  const updateMutation = useUpdateCaerholdResident();
   const { toast } = useToast();
+
+  const handleTogglePublished = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'published' ? 'draft' : 'published';
+    try {
+      await updateMutation.mutateAsync({ id, input: { profile_status: newStatus } as any });
+      toast({
+        title: newStatus === 'published' ? 'Resident published' : 'Resident unpublished',
+      });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+  };
 
   const handleCreate = async () => {
     try {
@@ -156,13 +170,14 @@ export default function CaerholdAdminResidents() {
                   <TableCell className="text-muted-foreground">{resident.handle}</TableCell>
                   <TableCell className="text-muted-foreground">{resident.role_title || '—'}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Badge variant={(resident as any).profile_status === 'published' ? 'default' : 'secondary'}>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={(resident as any).profile_status === 'published'}
+                        onCheckedChange={() => handleTogglePublished(resident.id, (resident as any).profile_status)}
+                      />
+                      <span className="text-xs text-muted-foreground">
                         {(resident as any).profile_status === 'published' ? 'Published' : 'Draft'}
-                      </Badge>
-                      <Badge variant={resident.posting_enabled ? 'default' : 'secondary'}>
-                        {resident.posting_enabled ? 'Active' : 'Disabled'}
-                      </Badge>
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

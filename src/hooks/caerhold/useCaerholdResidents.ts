@@ -113,6 +113,7 @@ export function useUpdateCaerholdResident() {
       if (input.canon_rules !== undefined) updateData.canon_rules = input.canon_rules as Json;
       if (input.posting_enabled !== undefined) updateData.posting_enabled = input.posting_enabled;
       if (input.avatar_media_id !== undefined) updateData.avatar_media_id = input.avatar_media_id;
+      if ((input as any).profile_status !== undefined) updateData.profile_status = (input as any).profile_status;
 
       const { data, error } = await supabase
         .from('caerhold_residents')
