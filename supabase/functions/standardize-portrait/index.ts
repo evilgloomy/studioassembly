@@ -7,15 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const STANDARDIZE_PROMPT = `Transform this LEGO minifigure photo into a clean, professional portrait.
-Requirements:
-- Pure white background, seamless, no shadows on the background
-- Minifigure centered in frame, shot from roughly chest/waist up or full body
-- Soft, even studio lighting with no harsh shadows
-- Remove any background clutter, other objects, or surface textures
-- Keep the minifigure's exact appearance, colors, accessories, and expression unchanged
-- The result should look like an official catalog-style product photo
-- Output a high quality, clean image`;
+const STANDARDIZE_PROMPT = `Using the provided reference image, generate a highly accurate, photorealistic 3D render of this exact Lego minifigure in a high-quality, cinematic 'Lego Movie' style. Maintain strict 1:1 consistency with the character's specific hair piece, facial expression, and clothing details (dark red jacket, tan vest, white collared shirt, and light blue legs). The minifigure must be standing directly on a seamless, bright white background. Do not include any black baseplate, stand, or ground props`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
