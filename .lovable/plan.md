@@ -1,46 +1,55 @@
 
 
-# Enhanced Public Resident Profile Page
+# Redesign Resident Profile Page
 
 ## Overview
 
-Redesign the resident profile page to feel like a proper character showcase with a large hero portrait, structured detail sections, and a richer visual layout.
+Rebuild the profile page layout to match the reference design -- a visually rich character showcase with an illustrated banner, overlapping portrait card, and polished detail sections with rounded styling.
 
-## Changes
+## Layout Changes
 
-### 1. Large Hero Portrait Section
+### 1. Hero Banner with Overlapping Portrait
 
-Replace the small 24x24 circular avatar with a large, prominent portrait image. The avatar image will be displayed at a much bigger size (e.g., 280x280px) without the circular crop -- showing the full standardized portrait as a square/rectangular image that blends into the white background. The name, handle, and role title will sit below or beside the portrait in a centered hero layout.
+- Add a full-width decorative banner at the top of the page (below the header). Use a soft gradient or the existing `hero-city.jpg` asset as the banner background, giving it a muted/blurred treatment so it doesn't compete with the portrait.
+- The resident's portrait sits **centered and overlapping** the bottom of the banner, inside a white card frame with rounded corners and a subtle shadow. The portrait will be larger than the current 288px -- roughly 280-320px, displayed with `object-contain` so it blends into the white card.
+- The banner will be approximately 280px tall, with the portrait card offset so it overlaps the banner by about half.
 
-### 2. Structured Detail Sections
+### 2. Identity Block (Centered Below Portrait)
 
-Surface the rich data already stored in the database that's currently hidden:
+- Large bold display name
+- Handle in muted text below
+- Role title below the handle
+- "Young Resident" badge if `is_child` is true
 
-- **Personality traits** -- pulled from the `personality` JSONB field, displayed as tags/badges
-- **Lore hooks** -- pulled from `lore_hooks` JSONB, shown as narrative snippets or bullet points
-- **Canon details** -- relationships, backstory from `canon_rules` shown in a "About" or "Dossier" style section
-- **Child indicator** -- if `is_child` is true, show a subtle badge like "Young Resident"
+### 3. Bio Section
 
-### 3. Portrait Gallery
+- The bio text displayed in a readable block with generous line-height, centered within a max-width container. Decorative leaf/botanical SVG accents on the sides are not feasible without custom artwork, so the bio will be styled cleanly with slightly larger font and relaxed spacing.
 
-Query `caerhold_resident_portraits` to show all available portraits (source, standardized, etc.) in a small gallery below the main portrait, so visitors can see the character from different angles or in different styles.
+### 4. Detail Cards (Personality + Lore)
 
-### 4. Layout Restructuring
+- **Personality** and **Lore** sections displayed **side-by-side** in rounded cards with subtle borders and background fills.
+- Personality traits shown as **colored pill badges** (using a green/teal accent) instead of the current outline badges, matching the reference.
+- Lore hooks shown as a bulleted list with bold keys.
+- Backstory and Relationships sections integrated into additional cards if data exists.
 
-- Centered hero layout: large portrait on top, name/title below
-- Bio in a dedicated readable block
-- Detail cards in a clean grid (personality, lore, relationships)
-- Posts section remains at the bottom but with a cleaner separator
+### 5. Posts Section
+
+- Remains at the bottom with a clean separator, largely unchanged.
+
+### 6. Portrait Gallery
+
+- If multiple portraits exist, shown in a small grid below the detail cards.
 
 ## Technical Details
 
-**Files to modify:**
+**File to modify:** `src/pages/caerhold/ResidentProfile.tsx`
 
-1. **`src/pages/caerhold/ResidentProfile.tsx`** -- Complete redesign of the layout with larger portrait, detail sections, and portrait gallery
-2. **`src/hooks/caerhold/useCaerholdResidents.ts`** -- Update the `useCaerholdResident` query to also fetch portrait gallery data from `caerhold_resident_portraits` joined with `caerhold_media`
+- Restructure the JSX to use: banner div (with background image) -> overlapping portrait card (negative margin) -> identity text -> bio -> detail grid -> posts
+- Use explicit `rounded-2xl` and `rounded-xl` classes on the portrait card and detail sections (overriding the global 0px radius for this page's specific design)
+- Add `shadow-lg` to the portrait card for the floating effect
+- Import `hero-city.jpg` for the banner background
+- Personality badges get custom green/teal background styling via className overrides
+- No new components or hooks needed -- purely a layout and styling change within the existing page
 
-**New data fetching:**
-- Join `caerhold_resident_portraits` on `resident_id` to get all portrait media URLs
-- The personality/lore_hooks/canon_rules JSONB fields are already returned but not displayed -- just need to render them
+**No database or backend changes required.**
 
-**No database changes needed** -- all the data is already in the schema, just not surfaced in the UI.
