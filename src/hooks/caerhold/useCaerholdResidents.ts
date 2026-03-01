@@ -6,8 +6,19 @@ import type { Json } from '@/integrations/supabase/types';
 const QUERY_KEY = ['caerhold', 'residents'];
 
 // Helper to convert database row to typed CaerholdResident
-function mapResident(row: any): CaerholdResident {
+export interface ResidentPortrait {
+  id: string;
+  label: string;
+  public_url: string;
+}
+
+function mapResident(row: any): CaerholdResident & { avatar_url: string | null; portraits: ResidentPortrait[] } {
   const avatarUrl = row.avatar_media?.public_url || row.source_media?.public_url || null;
+  const portraits: ResidentPortrait[] = (row.portraits || []).map((p: any) => ({
+    id: p.id,
+    label: p.label,
+    public_url: p.media?.public_url || '',
+  })).filter((p: ResidentPortrait) => p.public_url);
   return {
     ...row,
     tone_profile: (row.tone_profile || {}) as CaerholdToneProfile,
@@ -16,6 +27,7 @@ function mapResident(row: any): CaerholdResident {
     lore_hooks: row.lore_hooks || {},
     profile_status: row.profile_status || 'draft',
     avatar_url: avatarUrl,
+    portraits,
   };
 }
 
@@ -40,7 +52,7 @@ export function useCaerholdResident(slug: string) {
     queryFn: async (): Promise<CaerholdResident | null> => {
       const { data, error } = await supabase
         .from('caerhold_residents')
-        .select('*, avatar_media:caerhold_media!fk_avatar_media(public_url), source_media:caerhold_media!caerhold_residents_source_media_id_fkey(public_url)')
+        .select('*, avatar_media:caerhold_media!fk_avatar_media(public_url), source_media:caerhold_media!caerhold_residents_source_media_id_fkey(public_url), portraits:caerhold_resident_portraits(id, label, media:caerhold_media(public_url))')
         .eq('slug', slug)
         .maybeSingle();
 
