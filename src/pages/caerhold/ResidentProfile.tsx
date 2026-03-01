@@ -97,7 +97,7 @@ export default function CaerholdResidentProfile() {
     <CaerholdLayout>
       {/* Hero Banner */}
       <div
-        className="relative w-full h-[280px] bg-secondary overflow-hidden"
+        className="relative w-full h-[360px] bg-secondary overflow-hidden"
         style={{
           backgroundImage: `url(${heroBanner})`,
           backgroundSize: 'cover',
