@@ -1,61 +1,43 @@
 
 
-# Add "Is Child" Toggle for Caerhold Residents
+# Regenerate Profile + Undo for Resident Editor
 
 ## Overview
 
-Add a boolean `is_child` column to the `caerhold_residents` table and integrate it into the AI profile generation and the admin editor. When the AI analyzes a minifig photo, it will detect shorter legs (a hallmark of LEGO child figures) and set this flag. The generated bio and personality will reflect a child character. Admins can also manually toggle this in the editor.
+Add two new buttons to the Resident Editor: a "Regenerate Profile" button (with a confirmation dialog warning that it will overwrite all current data) and an "Undo" button that restores the most recently saved version of the profile.
 
 ## Changes
 
-### 1. Database Migration
+### 1. ResidentEditor.tsx -- Regenerate Button with Confirmation
 
-Add a new `is_child` boolean column to `caerhold_residents`:
+- Import `AlertDialog` components and `Undo2` icon from lucide-react
+- Add state: `showRegenConfirm` (boolean) to control the confirmation dialog
+- Add a "Regenerate Profile" button (with `RefreshCw` icon) in the Actions bar
+- Clicking it opens an `AlertDialog` with:
+  - Title: "Regenerate Profile?"
+  - Description: "This will use AI to create a completely new profile from the source photo. All current information (name, bio, personality, tone, lore, canon rules) will be overwritten and cannot be recovered unless you save first."
+  - Cancel button
+  - Destructive "Regenerate" confirm button
+- On confirm: look up the resident's profile job from `caerhold_resident_profile_jobs` (by `result_resident_id`), then call `useGenerateResidentProfile` with that job ID. On success, invalidate queries so the editor reloads with the new data.
 
-```sql
-ALTER TABLE public.caerhold_residents
-  ADD COLUMN is_child boolean NOT NULL DEFAULT false;
-```
+### 2. ResidentEditor.tsx -- Undo (Revert to Last Saved)
 
-No RLS changes needed -- existing policies cover all columns.
+- Add state: `savedSnapshot` that captures the full form state whenever the resident data loads from the database (set in the `useEffect` that populates the form)
+- Add an "Undo" button (with `Undo2` icon) in the Actions bar
+- Clicking it restores `form` to `savedSnapshot`, effectively discarding any unsaved edits
+- The button is disabled when the form matches the saved snapshot (no changes to undo)
+- This is a client-side revert to the last database-saved state -- simple and instant
 
-### 2. Edge Function: `generate-resident-profile/index.ts`
+### 3. Job Lookup for Regeneration
 
-**System prompt update** -- add child-detection guidance:
-- Instruct the AI to look for shorter/stubby legs (the key visual indicator of a LEGO child minifigure)
-- When detected, the bio, occupation, and personality should reflect a child (e.g., student, young dreamer, mentions school or playground)
-
-**Tool schema update** -- add `is_child` to the function parameters:
-```json
-"is_child": {
-  "type": "boolean",
-  "description": "True if the minifigure has short/stubby legs indicating a child character"
-}
-```
-
-Add `is_child` to the `required` array.
-
-**Resident insert/update** -- pass `profile.is_child` when creating or updating the resident record.
-
-### 3. Resident Editor: `src/pages/caerhold/admin/ResidentEditor.tsx`
-
-- Load `is_child` into the form state from the resident data
-- Add a toggle in the Identity section: "Is Child" switch
-- Save `is_child` alongside the other direct fields (in the `supabase.update` call)
-
-### 4. TypeScript Types: `src/types/caerhold.ts`
-
-- Add `is_child: boolean` to `CaerholdResident` interface
-- Add `is_child?: boolean` to `CaerholdResidentInput` interface
-
-### 5. Public Profile (optional display)
-
-No changes needed for the public profile page -- the bio text itself will reflect whether the character is a child, so no separate UI indicator is required.
+The edge function expects a `job_id`. To find it from the editor:
+- Query `caerhold_resident_profile_jobs` where `result_resident_id = resident.id` and pick the most recent one
+- If no job exists (manually created resident with no source media), disable the Regenerate button and show a tooltip: "No source photo available for regeneration"
 
 ## Technical Summary
 
-- **Database**: 1 migration adding `is_child boolean NOT NULL DEFAULT false`
-- **Edge function**: Prompt and schema updates in `generate-resident-profile/index.ts`, plus passing the field on insert/update
-- **Frontend**: Form state + toggle in `ResidentEditor.tsx`
-- **Types**: 2 small additions to `src/types/caerhold.ts`
+- **Single file change**: `src/pages/caerhold/admin/ResidentEditor.tsx`
+- No database changes needed -- the existing `caerhold_resident_profile_jobs` table already links jobs to residents via `result_resident_id`
+- No edge function changes -- the existing regeneration path (updating an existing resident when `job.result_resident_id` is set) already works
+- Undo is purely client-side (restores last loaded DB state), not a versioning system
 
