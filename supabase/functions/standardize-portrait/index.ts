@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const STANDARDIZE_PROMPT = `Using the provided reference image, generate a highly accurate, photorealistic 3D render of this exact Lego minifigure in a high-quality, cinematic 'Lego Movie' style. Maintain strict 1:1 consistency with the character's specific hair piece, facial expression, and all clothing details. The minifigure must be standing directly on a seamless, bright white background. Do not include any black baseplate, stand, or ground props`;
+const STANDARDIZE_PROMPT = `Using the provided reference image as the sole character reference, create a full CGI 3D render of this Lego minifigure as if it were a hero shot from 'The Lego Movie'. The render must look like it was produced by Animal Logic's rendering pipeline -- subsurface scattering on the plastic skin, micro-scratches and fingerprint smudges on glossy surfaces, subtle depth-of-field, and cinematic studio lighting with soft key light and rim highlights. Maintain absolute 1:1 fidelity to every detail in the reference: exact hair mould, precise facial print, all torso and leg printing, and any accessories. The minifigure should be standing in a neutral pose on a perfectly seamless, pure white cyclorama background with no baseplate, stand, shadow catcher, or ground plane visible. Output a single high-resolution image.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
