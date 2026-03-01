@@ -4,7 +4,7 @@ import { useCaerholdResidentPosts } from '@/hooks/caerhold/useCaerholdPosts';
 import { useParams, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import type { CaerholdCanonRules } from '@/types/caerhold';
-import heroBanner from '@/assets/hero-city.jpg';
+import heroBanner from '@/assets/caerhold-banner.png';
 import botanicalLeft from '@/assets/botanical-left.png';
 import botanicalRight from '@/assets/botanical-right.png';
 
