@@ -6,6 +6,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Recursively sanitize all string values to remove non-Latin characters
+// and broken JSON fragments that the AI model sometimes injects
+function sanitizeStrings(obj: any): any {
+  if (typeof obj === 'string') {
+    return obj
+      .replace(/[^\x00-\x7F\u00C0-\u024F\u1E00-\u1EFF\s]/g, '')
+      .replace(/[\]\}],?\w[\w_]*:.*$/g, '')
+      .trim();
+  }
+  if (Array.isArray(obj)) return obj.map(sanitizeStrings);
+  if (obj && typeof obj === 'object') {
+    const result: any = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[k] = sanitizeStrings(v);
+    }
+    return result;
+  }
+  return obj;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -132,7 +152,7 @@ Image URL: ${imageUrl}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           {
@@ -242,7 +262,9 @@ Image URL: ${imageUrl}`;
       throw new Error("AI did not return structured profile");
     }
 
-    const profile = JSON.parse(toolCall.function.arguments);
+    const rawProfile = JSON.parse(toolCall.function.arguments);
+    const profile = sanitizeStrings(rawProfile);
+    console.log("Sanitized profile:", JSON.stringify(profile));
     const slug = `${profile.first_name}-${profile.last_name}`.toLowerCase().replace(/[^a-z0-9-]/g, "");
     const handle = profile.handle.startsWith("@") ? profile.handle : `@${profile.handle}`;
     const displayName = `${profile.first_name} ${profile.last_name}`;
