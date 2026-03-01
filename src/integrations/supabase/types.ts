@@ -320,6 +320,45 @@ export type Database = {
           },
         ]
       }
+      caerhold_resident_portraits: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          media_id: string
+          resident_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string
+          media_id: string
+          resident_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          media_id?: string
+          resident_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_resident_portraits_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_resident_portraits_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caerhold_resident_profile_jobs: {
         Row: {
           created_at: string
