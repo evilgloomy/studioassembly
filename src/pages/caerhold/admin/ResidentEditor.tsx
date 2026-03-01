@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCaerholdResidentById, useUpdateCaerholdResident } from '@/hooks/caerhold/useCaerholdResidents';
 import { usePublishResident, useUnpublishResident, useGenerateResidentProfile } from '@/hooks/caerhold/useCaerholdResidentImport';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,17 +11,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
 export default function ResidentEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: resident, isLoading } = useCaerholdResidentById(id || '');
   const updateMutation = useUpdateCaerholdResident();
   const publishMutation = usePublishResident();
   const unpublishMutation = useUnpublishResident();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const [form, setForm] = useState<Record<string, any>>({});
 
@@ -98,6 +102,47 @@ export default function ResidentEditor() {
 
   const updateField = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `caerhold/avatars/${id}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('media').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('media').getPublicUrl(path);
+      const batchId = crypto.randomUUID();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data: mediaRow, error: mediaError } = await (supabase as any)
+        .from('caerhold_media')
+        .insert({
+          storage_path: path,
+          public_url: urlData.publicUrl,
+          type: file.type,
+          upload_batch_id: batchId,
+          uploaded_by: user!.id,
+        })
+        .select('id')
+        .single();
+      if (mediaError) throw mediaError;
+
+      await (supabase as any)
+        .from('caerhold_residents')
+        .update({ avatar_media_id: mediaRow.id })
+        .eq('id', id);
+
+      toast({ title: 'Avatar updated' });
+      queryClient.invalidateQueries({ queryKey: ['caerhold', 'residents'] });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Upload failed', description: err.message });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const updateNestedField = (parent: string, key: string, value: any) => {
     setForm(prev => ({ ...prev, [parent]: { ...prev[parent], [key]: value } }));
   };
@@ -130,11 +175,20 @@ export default function ResidentEditor() {
       </div>
 
       {/* Portrait */}
-      {(resident as any).avatar_url && (
-        <div className="border border-border p-6 flex justify-center">
+      <div className="border border-border p-6 flex flex-col items-center gap-4">
+        {(resident as any).avatar_url ? (
           <img src={(resident as any).avatar_url} alt={resident.display_name} className="max-h-64 rounded object-contain" />
-        </div>
-      )}
+        ) : (
+          <div className="h-48 w-48 bg-muted rounded flex items-center justify-center text-muted-foreground text-4xl font-bold">
+            {resident.display_name?.charAt(0)}
+          </div>
+        )}
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+          <Camera className="mr-2 h-4 w-4" />
+          {uploading ? 'Uploading...' : 'Change Avatar'}
+        </Button>
+      </div>
 
       {/* Basic Info */}
       <section className="space-y-4 border border-border p-6">
