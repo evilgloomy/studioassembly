@@ -114,10 +114,10 @@ export default function CaerholdResidentProfile() {
             <img
               src={(resident as any).avatar_url}
               alt={resident.display_name}
-              className="w-[320px] h-[380px] object-cover object-top rounded-xl"
+              className="w-[260px] h-[320px] object-cover object-top rounded-xl"
             />
           ) : (
-            <div className="w-[320px] h-[380px] bg-secondary flex items-center justify-center text-6xl font-bold rounded-xl">
+            <div className="w-[260px] h-[320px] bg-secondary flex items-center justify-center text-6xl font-bold rounded-xl">
               {resident.display_name[0]}
             </div>
           )}
