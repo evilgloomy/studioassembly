@@ -327,7 +327,7 @@ export default function ResidentEditor() {
   return (
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/caerhold/residents')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold tracking-widest uppercase flex-1">Edit Resident</h1>
