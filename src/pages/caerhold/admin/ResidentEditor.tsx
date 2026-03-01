@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera, Undo2 } from 'lucide-react';
+import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera, Undo2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ResidentEditor() {
@@ -31,6 +31,7 @@ export default function ResidentEditor() {
   const generateMutation = useGenerateResidentProfile();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [standardizing, setStandardizing] = useState(false);
   const [showRegenConfirm, setShowRegenConfirm] = useState(false);
   const [profileJobId, setProfileJobId] = useState<string | null>(null);
   const [jobLookupDone, setJobLookupDone] = useState(false);
@@ -202,6 +203,36 @@ export default function ResidentEditor() {
     }
   };
 
+  const handleStandardizePortrait = async () => {
+    if (!id || !resident) return;
+    const avatarMediaId = (resident as any).avatar_media_id;
+    if (!avatarMediaId) {
+      toast({ variant: 'destructive', title: 'No avatar', description: 'Upload an avatar first before standardizing.' });
+      return;
+    }
+    setStandardizing(true);
+    try {
+      const batchId = crypto.randomUUID();
+      const { data, error } = await supabase.functions.invoke('standardize-portrait', {
+        body: { media_id: avatarMediaId, batch_id: batchId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      await (supabase as any)
+        .from('caerhold_residents')
+        .update({ avatar_media_id: data.media_id })
+        .eq('id', id);
+
+      toast({ title: 'Portrait standardized', description: 'Avatar updated with clean studio portrait.' });
+      queryClient.invalidateQueries({ queryKey: ['caerhold', 'residents'] });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Standardization failed', description: err.message });
+    } finally {
+      setStandardizing(false);
+    }
+  };
+
   const updateNestedField = (parent: string, key: string, value: any) => {
     setForm(prev => ({ ...prev, [parent]: { ...prev[parent], [key]: value } }));
   };
@@ -244,10 +275,16 @@ export default function ResidentEditor() {
           </div>
         )}
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-          <Camera className="mr-2 h-4 w-4" />
-          {uploading ? 'Uploading...' : 'Change Avatar'}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading || standardizing}>
+            <Camera className="mr-2 h-4 w-4" />
+            {uploading ? 'Uploading...' : 'Change Avatar'}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleStandardizePortrait} disabled={standardizing || uploading || !(resident as any).avatar_media_id}>
+            <Sparkles className={`mr-2 h-4 w-4 ${standardizing ? 'animate-spin' : ''}`} />
+            {standardizing ? 'Standardizing...' : 'Standardize Portrait'}
+          </Button>
+        </div>
       </div>
 
       {/* Basic Info */}
