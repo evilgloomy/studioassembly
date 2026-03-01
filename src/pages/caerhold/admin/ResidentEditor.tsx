@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera, Undo2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera, Undo2, Sparkles, Check, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ResidentEditor() {
@@ -35,6 +35,7 @@ export default function ResidentEditor() {
   const [showRegenConfirm, setShowRegenConfirm] = useState(false);
   const [profileJobId, setProfileJobId] = useState<string | null>(null);
   const [jobLookupDone, setJobLookupDone] = useState(false);
+  const [portraits, setPortraits] = useState<Array<{ id: string; media_id: string; label: string; public_url: string }>>([]);
 
   const [form, setForm] = useState<Record<string, any>>({});
   const [savedSnapshot, setSavedSnapshot] = useState<Record<string, any>>({});
@@ -82,6 +83,26 @@ export default function ResidentEditor() {
         setJobLookupDone(true);
       });
   }, [id]);
+
+  // Load all portraits for this resident
+  const loadPortraits = async () => {
+    if (!id) return;
+    const { data } = await (supabase as any)
+      .from('caerhold_resident_portraits')
+      .select('id, media_id, label, media:caerhold_media!caerhold_resident_portraits_media_id_fkey(public_url)')
+      .eq('resident_id', id)
+      .order('created_at', { ascending: false });
+    setPortraits(
+      (data || []).map((p: any) => ({
+        id: p.id,
+        media_id: p.media_id,
+        label: p.label,
+        public_url: p.media?.public_url || '',
+      }))
+    );
+  };
+
+  useEffect(() => { loadPortraits(); }, [id]);
 
   // Check if form has unsaved changes
   const hasChanges = useMemo(() => {
@@ -194,8 +215,16 @@ export default function ResidentEditor() {
         .update({ avatar_media_id: mediaRow.id })
         .eq('id', id);
 
+      // Add to portraits gallery
+      await (supabase as any)
+        .from('caerhold_resident_portraits')
+        .insert({ resident_id: id, media_id: mediaRow.id, label: 'upload' })
+        .select()
+        .single();
+
       toast({ title: 'Avatar updated' });
       queryClient.invalidateQueries({ queryKey: ['caerhold', 'residents'] });
+      loadPortraits();
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Upload failed', description: err.message });
     } finally {
@@ -219,17 +248,59 @@ export default function ResidentEditor() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      // Set as active avatar
       await (supabase as any)
         .from('caerhold_residents')
         .update({ avatar_media_id: data.media_id })
         .eq('id', id);
 
-      toast({ title: 'Portrait standardized', description: 'Avatar updated with clean studio portrait.' });
+      // Add to portraits table
+      await (supabase as any)
+        .from('caerhold_resident_portraits')
+        .insert({ resident_id: id, media_id: data.media_id, label: 'standardized' })
+        .select()
+        .single();
+
+      toast({ title: 'Portrait standardized', description: 'New studio portrait generated and set as avatar.' });
       queryClient.invalidateQueries({ queryKey: ['caerhold', 'residents'] });
+      loadPortraits();
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Standardization failed', description: err.message });
     } finally {
       setStandardizing(false);
+    }
+  };
+
+  const handleSetActiveAvatar = async (mediaId: string) => {
+    if (!id) return;
+    try {
+      await (supabase as any)
+        .from('caerhold_residents')
+        .update({ avatar_media_id: mediaId })
+        .eq('id', id);
+      toast({ title: 'Avatar updated' });
+      queryClient.invalidateQueries({ queryKey: ['caerhold', 'residents'] });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    }
+  };
+
+  const handleDeletePortrait = async (portraitId: string, mediaId: string) => {
+    if (!id) return;
+    const isActive = (resident as any).avatar_media_id === mediaId;
+    if (isActive) {
+      toast({ variant: 'destructive', title: 'Cannot delete', description: 'This is the active avatar. Set another portrait first.' });
+      return;
+    }
+    try {
+      await (supabase as any)
+        .from('caerhold_resident_portraits')
+        .delete()
+        .eq('id', portraitId);
+      toast({ title: 'Portrait removed' });
+      loadPortraits();
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
     }
   };
 
@@ -265,27 +336,73 @@ export default function ResidentEditor() {
         </Badge>
       </div>
 
-      {/* Portrait */}
-      <div className="border border-border p-6 flex flex-col items-center gap-4">
-        {(resident as any).avatar_url ? (
-          <img src={(resident as any).avatar_url} alt={resident.display_name} className="max-h-64 rounded object-contain" />
-        ) : (
-          <div className="h-48 w-48 bg-muted rounded flex items-center justify-center text-muted-foreground text-4xl font-bold">
-            {resident.display_name?.charAt(0)}
-          </div>
-        )}
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-        <div className="flex gap-2">
+      {/* Portrait Gallery */}
+      <section className="border border-border p-6 space-y-4">
+        <h2 className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Portraits</h2>
+        
+        {/* Current active avatar */}
+        <div className="flex justify-center">
+          {(resident as any).avatar_url ? (
+            <img src={(resident as any).avatar_url} alt={resident.display_name} className="max-h-64 rounded object-contain" />
+          ) : (
+            <div className="h-48 w-48 bg-muted rounded flex items-center justify-center text-muted-foreground text-4xl font-bold">
+              {resident.display_name?.charAt(0)}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 justify-center">
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading || standardizing}>
             <Camera className="mr-2 h-4 w-4" />
-            {uploading ? 'Uploading...' : 'Change Avatar'}
+            {uploading ? 'Uploading...' : 'Upload Photo'}
           </Button>
           <Button variant="outline" size="sm" onClick={handleStandardizePortrait} disabled={standardizing || uploading || !(resident as any).avatar_media_id}>
             <Sparkles className={`mr-2 h-4 w-4 ${standardizing ? 'animate-spin' : ''}`} />
             {standardizing ? 'Standardizing...' : 'Standardize Portrait'}
           </Button>
         </div>
-      </div>
+
+        {/* Gallery grid */}
+        {portraits.length > 0 && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">Click a portrait to set it as the active avatar.</p>
+            <div className="grid grid-cols-3 gap-3">
+              {portraits.map((p) => {
+                const isActive = (resident as any).avatar_media_id === p.media_id;
+                return (
+                  <div
+                    key={p.id}
+                    className={`relative group border-2 rounded overflow-hidden cursor-pointer transition-colors ${
+                      isActive ? 'border-primary' : 'border-border hover:border-muted-foreground'
+                    }`}
+                    onClick={() => !isActive && handleSetActiveAvatar(p.media_id)}
+                  >
+                    <img src={p.public_url} alt="" className="w-full aspect-square object-cover" />
+                    {isActive && (
+                      <div className="absolute top-1 left-1 bg-primary text-primary-foreground rounded-full p-0.5">
+                        <Check className="h-3 w-3" />
+                      </div>
+                    )}
+                    <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px] px-1 py-0">
+                      {p.label}
+                    </Badge>
+                    {!isActive && (
+                      <button
+                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => { e.stopPropagation(); handleDeletePortrait(p.id, p.media_id); }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Basic Info */}
       <section className="space-y-4 border border-border p-6">
