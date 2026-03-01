@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCaerholdResidentById, useUpdateCaerholdResident } from '@/hooks/caerhold/useCaerholdResidents';
@@ -11,8 +11,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera, Undo2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
 export default function ResidentEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -22,30 +28,80 @@ export default function ResidentEditor() {
   const updateMutation = useUpdateCaerholdResident();
   const publishMutation = usePublishResident();
   const unpublishMutation = useUnpublishResident();
+  const generateMutation = useGenerateResidentProfile();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
+  const [profileJobId, setProfileJobId] = useState<string | null>(null);
+  const [jobLookupDone, setJobLookupDone] = useState(false);
 
   const [form, setForm] = useState<Record<string, any>>({});
+  const [savedSnapshot, setSavedSnapshot] = useState<Record<string, any>>({});
+
+  // Build form state from resident data
+  const buildFormState = (r: typeof resident) => {
+    if (!r) return {};
+    return {
+      first_name: (r as any).first_name || '',
+      last_name: (r as any).last_name || '',
+      display_name: r.display_name,
+      handle: r.handle,
+      slug: r.slug,
+      role_title: r.role_title || '',
+      bio: r.bio || '',
+      posting_enabled: r.posting_enabled,
+      is_child: (r as any).is_child ?? false,
+      tone_profile: r.tone_profile || {},
+      personality: (r as any).personality || {},
+      lore_hooks: (r as any).lore_hooks || {},
+      canon_rules: r.canon_rules || {},
+    };
+  };
 
   useEffect(() => {
     if (resident) {
-      setForm({
-        first_name: (resident as any).first_name || '',
-        last_name: (resident as any).last_name || '',
-        display_name: resident.display_name,
-        handle: resident.handle,
-        slug: resident.slug,
-        role_title: resident.role_title || '',
-        bio: resident.bio || '',
-        posting_enabled: resident.posting_enabled,
-        is_child: (resident as any).is_child ?? false,
-        tone_profile: resident.tone_profile || {},
-        personality: (resident as any).personality || {},
-        lore_hooks: (resident as any).lore_hooks || {},
-        canon_rules: resident.canon_rules || {},
-      });
+      const state = buildFormState(resident);
+      setForm(state);
+      setSavedSnapshot(state);
     }
   }, [resident]);
+
+  // Look up the most recent profile job for this resident
+  useEffect(() => {
+    if (!id) return;
+    setJobLookupDone(false);
+    (supabase as any)
+      .from('caerhold_resident_profile_jobs')
+      .select('id')
+      .eq('result_resident_id', id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data }: any) => {
+        setProfileJobId(data?.[0]?.id || null);
+        setJobLookupDone(true);
+      });
+  }, [id]);
+
+  // Check if form has unsaved changes
+  const hasChanges = useMemo(() => {
+    return JSON.stringify(form) !== JSON.stringify(savedSnapshot);
+  }, [form, savedSnapshot]);
+
+  const handleUndo = () => {
+    setForm({ ...savedSnapshot });
+    toast({ title: 'Reverted', description: 'Form restored to last saved state.' });
+  };
+
+  const handleRegenerate = async () => {
+    if (!profileJobId) return;
+    setShowRegenConfirm(false);
+    try {
+      await generateMutation.mutateAsync(profileJobId);
+      toast({ title: 'Regenerated', description: 'Profile has been regenerated from source photo.' });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Regeneration failed', description: err.message });
+    }
+  };
 
   const handleSave = async () => {
     if (!id) return;
@@ -76,6 +132,7 @@ export default function ResidentEditor() {
         })
         .eq('id', id);
 
+      setSavedSnapshot({ ...form });
       toast({ title: 'Saved', description: 'Resident profile updated.' });
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Error', description: err.message });
@@ -163,6 +220,7 @@ export default function ResidentEditor() {
   }
 
   const isPublished = (resident as any).profile_status === 'published';
+  const canRegenerate = jobLookupDone && !!profileJobId;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -367,11 +425,33 @@ export default function ResidentEditor() {
       </section>
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         <Button onClick={handleSave} disabled={updateMutation.isPending}>
           <Save className="mr-2 h-4 w-4" />
           {updateMutation.isPending ? 'Saving...' : 'Save'}
         </Button>
+        <Button variant="outline" onClick={handleUndo} disabled={!hasChanges}>
+          <Undo2 className="mr-2 h-4 w-4" /> Undo Changes
+        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowRegenConfirm(true)}
+                  disabled={!canRegenerate || generateMutation.isPending}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${generateMutation.isPending ? 'animate-spin' : ''}`} />
+                  {generateMutation.isPending ? 'Regenerating...' : 'Regenerate Profile'}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {!canRegenerate && jobLookupDone && (
+              <TooltipContent>No source photo available for regeneration</TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
         {isPublished ? (
           <Button variant="outline" onClick={handleUnpublish} disabled={unpublishMutation.isPending}>
             <EyeOff className="mr-2 h-4 w-4" /> Unpublish
@@ -382,6 +462,24 @@ export default function ResidentEditor() {
           </Button>
         )}
       </div>
+
+      {/* Regenerate Confirmation Dialog */}
+      <AlertDialog open={showRegenConfirm} onOpenChange={setShowRegenConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerate Profile?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will use AI to create a completely new profile from the source photo. All current information (name, bio, personality, tone, lore, canon rules) will be overwritten and cannot be recovered unless you save first.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRegenerate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Regenerate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
