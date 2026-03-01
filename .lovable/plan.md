@@ -1,65 +1,83 @@
 
 
-# Fix: Chinese Characters in AI-Generated Resident Profiles
+# Auto-Generate Standardized Portrait from Upload
 
-## Problem
+## Overview
 
-The AI model (`google/gemini-3-flash-preview`) occasionally produces corrupted JSON in tool call responses, injecting Chinese characters (e.g., `消`, `协助`) into string values. This corrupted data gets saved directly to the database and displayed in the editor.
+When a resident photo is uploaded during import, automatically run it through Gemini's image editing model to produce a clean, standardized portrait: white background, centered minifigure, consistent studio-style lighting -- matching the template style you shared.
 
-Example: `"Inquisitive消"` instead of `"Inquisitive"`, or `"Caerhold Junior Naturalist Club消"` instead of `"Caerhold Junior Naturalist Club"`.
+## How It Works
 
-## Root Cause
+### 1. New Edge Function: `standardize-portrait`
 
-The tool call `arguments` string from the AI sometimes contains garbled characters. The edge function parses this JSON and saves it without any sanitization.
+A dedicated edge function that:
+- Takes a source image URL (the raw uploaded photo)
+- Sends it to `google/gemini-2.5-flash-image` with a fixed prompt describing the desired output style
+- Receives the generated base64 image back
+- Uploads the result to storage as a new file (e.g., `caerhold/{batchId}/portrait_{uuid}.png`)
+- Creates a new `caerhold_media` record for the standardized portrait
+- Returns the new media ID and public URL
 
-## Solution (2 parts)
+**Prompt (preset for every image):**
+```
+Transform this LEGO minifigure photo into a clean, professional portrait.
+Requirements:
+- Pure white background, seamless, no shadows on the background
+- Minifigure centered in frame, shot from roughly chest/waist up or full body
+- Soft, even studio lighting with no harsh shadows
+- Remove any background clutter, other objects, or surface textures
+- Keep the minifigure's exact appearance, colors, accessories, and expression unchanged
+- The result should look like an official catalog-style product photo
+- Output a high quality, clean image
+```
 
-### 1. Sanitize AI output in the edge function
+### 2. Integration into Import Flow
 
-After parsing `toolCall.function.arguments`, add a sanitization step that:
-- Recursively walks all string values in the parsed profile object
-- Strips non-Latin/non-ASCII garbage characters (Chinese, Korean, etc.) that don't belong in English text
-- Cleans up any broken JSON fragments embedded in string values (e.g., `],grounding_rule:` appearing inside a string)
+Modify `useImportResidents` (or the `ResidentImport` page) so after uploading each file:
+1. Call `standardize-portrait` with the uploaded image URL
+2. This returns a new `media_id` for the standardized version
+3. Use this standardized media ID as the `avatar_media_id` when creating the profile job (so the AI analyzes the clean version)
+4. Store the original upload as the source and the standardized version as the avatar
 
-A regex like `/[^\x00-\x7F\u00C0-\u024F\u1E00-\u1EFF]/g` will strip non-Latin characters. A second pass will trim trailing JSON-like fragments from strings (e.g., patterns like `],key_name:` or `},next_key:`).
+The import progress UI will show an additional status step: "Standardizing portrait..." before "Generating profile..."
 
-**File:** `supabase/functions/generate-resident-profile/index.ts` (after line 245 where `profile` is parsed)
+### 3. Updated Import Flow (3 steps per image)
 
-### 2. Switch to a more stable model
+```text
+Upload raw photo --> Standardize portrait --> Generate AI profile
+     |                      |                        |
+  media record       new media record          resident record
+  (original)         (clean portrait)          (avatar = clean)
+```
 
-Change from `google/gemini-3-flash-preview` to `google/gemini-2.5-flash` which is a stable release and less prone to structured output corruption.
+### 4. Config
 
-**File:** `supabase/functions/generate-resident-profile/index.ts` (line 135)
-
-### 3. Fix existing corrupted data for Sami Vinter
-
-Run a one-time cleanup of the affected resident's data by manually cleaning the corrupted JSON fields in `canon_rules`, `personality`, and `lore_hooks`.
-
-This will be done via a database migration that updates the specific resident record.
+Add to `supabase/config.toml`:
+```toml
+[functions.standardize-portrait]
+verify_jwt = false
+```
 
 ## Technical Details
 
-Sanitization function (added to edge function):
+**Files to create:**
+- `supabase/functions/standardize-portrait/index.ts` -- new edge function using `google/gemini-2.5-flash-image` with `modalities: ["image", "text"]`
 
-```typescript
-function sanitizeStrings(obj: any): any {
-  if (typeof obj === 'string') {
-    return obj
-      .replace(/[^\x00-\x7F\u00C0-\u024F\u1E00-\u1EFF\s]/g, '')
-      .replace(/[\]\}],?\w[\w_]*:.*$/g, '')
-      .trim();
-  }
-  if (Array.isArray(obj)) return obj.map(sanitizeStrings);
-  if (obj && typeof obj === 'object') {
-    const result: any = {};
-    for (const [k, v] of Object.entries(obj)) {
-      result[k] = sanitizeStrings(v);
-    }
-    return result;
-  }
-  return obj;
-}
-```
+**Files to modify:**
+- `src/pages/caerhold/admin/ResidentImport.tsx` -- add standardization step between upload and profile generation, update progress UI
+- `src/hooks/caerhold/useCaerholdResidentImport.ts` -- add `useStandardizePortrait` mutation hook
+- `supabase/config.toml` -- register new function
 
-Applied right after `JSON.parse(toolCall.function.arguments)` so all data is clean before any database writes.
+**Edge function flow:**
+1. Receive `{ media_id, batch_id }` in request body
+2. Fetch the media record to get `public_url`
+3. Call Gemini image edit endpoint with the source image + preset prompt
+4. Extract base64 result from `choices[0].message.images[0].image_url.url`
+5. Decode base64 to binary, upload to storage as `caerhold/{batch_id}/portrait_{uuid}.png`
+6. Create new `caerhold_media` record for the standardized image
+7. Return `{ media_id, public_url }` of the new standardized portrait
+
+**Import page changes:**
+- Status flow becomes: `queued` -> `standardizing` -> `processing` -> `complete`/`failed`
+- Each image card shows the current step in the pipeline
 
