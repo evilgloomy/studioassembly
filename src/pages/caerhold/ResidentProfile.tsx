@@ -94,6 +94,18 @@ export default function CaerholdResidentProfile() {
 
   return (
     <CaerholdLayout>
+      {/* Page-level Botanical Decorations */}
+      <img
+        src={botanicalLeaves}
+        alt=""
+        className="fixed bottom-0 left-0 w-[400px] h-[400px] opacity-25 pointer-events-none z-0 hidden lg:block"
+      />
+      <img
+        src={botanicalLeaves}
+        alt=""
+        className="fixed bottom-0 right-0 w-[400px] h-[400px] opacity-25 pointer-events-none z-0 hidden lg:block scale-x-[-1]"
+      />
+
       {/* Hero Banner */}
       <div
         className="relative w-full h-[360px] bg-secondary overflow-hidden"
@@ -139,19 +151,9 @@ export default function CaerholdResidentProfile() {
         )}
       </div>
 
-      {/* Bio with Botanical Decorations */}
+      {/* Bio */}
       {resident.bio && (
-        <div className="relative max-w-2xl mx-auto mt-8 px-4">
-          <img
-            src={botanicalLeaves}
-            alt=""
-            className="absolute -left-24 top-1/2 -translate-y-1/2 w-64 h-64 opacity-40 pointer-events-none hidden lg:block"
-          />
-          <img
-            src={botanicalLeaves}
-            alt=""
-            className="absolute -right-24 top-1/2 -translate-y-1/2 w-64 h-64 opacity-40 pointer-events-none hidden lg:block scale-x-[-1]"
-          />
+        <div className="max-w-2xl mx-auto mt-8 px-4">
           <p className="text-foreground leading-relaxed text-lg text-center">{resident.bio}</p>
         </div>
       )}
