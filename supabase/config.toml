@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.generate-resident-profile]
 verify_jwt = false
+
+[functions.standardize-portrait]
+verify_jwt = false

@@ -107,6 +107,19 @@ export function useImportResidents() {
   });
 }
 
+export function useStandardizePortrait() {
+  return useMutation({
+    mutationFn: async ({ mediaId, batchId }: { mediaId: string; batchId: string }) => {
+      const { data, error } = await supabase.functions.invoke('standardize-portrait', {
+        body: { media_id: mediaId, batch_id: batchId },
+      });
+
+      if (error) throw error;
+      return data as { media_id: string; public_url: string };
+    },
+  });
+}
+
 export function useGenerateResidentProfile() {
   const queryClient = useQueryClient();
 
