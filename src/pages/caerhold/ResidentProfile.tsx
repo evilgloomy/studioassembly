@@ -110,17 +110,19 @@ export default function CaerholdResidentProfile() {
       {/* Overlapping Portrait Card */}
       <div className="flex justify-center -mt-44 relative z-10 px-4">
         <div className="rounded-2xl bg-card shadow-lg p-3 border border-border">
-          {(resident as any).avatar_url ? (
-            <img
-              src={(resident as any).avatar_url}
-              alt={resident.display_name}
-              className="w-[250px] h-[250px] object-contain rounded-xl"
-            />
+          <div className="w-[250px] h-[250px] rounded-xl overflow-hidden">
+            {(resident as any).avatar_url ? (
+              <img
+                src={(resident as any).avatar_url}
+                alt={resident.display_name}
+                className="w-full h-full object-contain scale-[2] origin-center"
+              />
           ) : (
-            <div className="w-[250px] h-[250px] bg-secondary flex items-center justify-center text-6xl font-bold rounded-xl">
+            <div className="w-full h-full bg-secondary flex items-center justify-center text-6xl font-bold">
               {resident.display_name[0]}
             </div>
           )}
+          </div>
         </div>
       </div>
 
