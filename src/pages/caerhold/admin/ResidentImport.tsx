@@ -1,23 +1,35 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useImportResidents, useGenerateResidentProfile } from '@/hooks/caerhold/useCaerholdResidentImport';
+import { useImportResidents, useGenerateResidentProfile, useStandardizePortrait } from '@/hooks/caerhold/useCaerholdResidentImport';
 import { Button } from '@/components/ui/button';
-import { Upload, Loader2, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { Upload, Loader2, CheckCircle, XCircle, ArrowRight, ImageIcon, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+type ImportStatus = 'queued' | 'standardizing' | 'processing' | 'complete' | 'failed';
 
 interface ImportResult {
   mediaId: string;
   jobId: string;
-  status: 'queued' | 'processing' | 'complete' | 'failed';
+  status: ImportStatus;
   fileName: string;
   residentName?: string;
   error?: string;
 }
 
+const STATUS_LABELS: Record<ImportStatus, string> = {
+  queued: 'Queued',
+  standardizing: 'Standardizing portrait…',
+  processing: 'Generating profile…',
+  complete: 'Complete',
+  failed: 'Failed',
+};
+
 export default function ResidentImport() {
   const [results, setResults] = useState<ImportResult[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [batchId, setBatchId] = useState<string>('');
   const importMutation = useImportResidents();
+  const standardizeMutation = useStandardizePortrait();
   const generateMutation = useGenerateResidentProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -27,10 +39,11 @@ export default function ResidentImport() {
     if (files.length === 0) return;
 
     setUploading(true);
-    const batchId = crypto.randomUUID();
+    const currentBatchId = crypto.randomUUID();
+    setBatchId(currentBatchId);
 
     try {
-      const importResults = await importMutation.mutateAsync({ files, batchId });
+      const importResults = await importMutation.mutateAsync({ files, batchId: currentBatchId });
       
       const initialResults: ImportResult[] = importResults.map((r, i) => ({
         mediaId: r.mediaId,
@@ -43,9 +56,28 @@ export default function ResidentImport() {
       // Process each job sequentially to avoid rate limits
       for (let i = 0; i < initialResults.length; i++) {
         const result = initialResults[i];
-        setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'processing' } : r));
+
+        // Step 1: Standardize portrait
+        setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'standardizing' } : r));
         
         try {
+          const standardized = await standardizeMutation.mutateAsync({
+            mediaId: result.mediaId,
+            batchId: currentBatchId,
+          });
+
+          // Update the job's media_id to point to the standardized portrait
+          // The generate-resident-profile function will use whatever media_id is on the job
+          // We need to update the job record so it references the clean portrait
+          const { supabase } = await import('@/integrations/supabase/client');
+          await supabase
+            .from('caerhold_resident_profile_jobs')
+            .update({ media_id: standardized.media_id })
+            .eq('id', result.jobId);
+
+          // Step 2: Generate profile
+          setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'processing' } : r));
+
           const data = await generateMutation.mutateAsync(result.jobId);
           setResults(prev => prev.map((r, idx) => 
             idx === i ? { ...r, status: 'complete', residentName: data?.profile?.first_name + ' ' + data?.profile?.last_name } : r
@@ -63,10 +95,10 @@ export default function ResidentImport() {
     } finally {
       setUploading(false);
     }
-  }, [importMutation, generateMutation, toast]);
+  }, [importMutation, standardizeMutation, generateMutation, toast]);
 
   const completedCount = results.filter(r => r.status === 'complete').length;
-  const processingIndex = results.findIndex(r => r.status === 'processing');
+  const activeIndex = results.findIndex(r => r.status === 'standardizing' || r.status === 'processing');
 
   return (
     <div className="space-y-6">
@@ -80,7 +112,7 @@ export default function ResidentImport() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Upload minifigure portrait photos. The system will analyze each image and generate a draft resident profile.
+        Upload minifigure portrait photos. Each image will be standardized (white background, centered) then analyzed to generate a draft resident profile.
       </p>
 
       {/* Upload Area */}
@@ -104,8 +136,8 @@ export default function ResidentImport() {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
-              {processingIndex >= 0
-                ? `Generating ${processingIndex + 1} of ${results.length} profiles...`
+              {activeIndex >= 0
+                ? `Processing ${activeIndex + 1} of ${results.length}…`
                 : `${completedCount} of ${results.length} profiles generated`}
             </span>
           </div>
@@ -114,10 +146,14 @@ export default function ResidentImport() {
             {results.map((result, i) => (
               <div key={i} className="flex items-center gap-3 p-3 border border-border bg-card">
                 {result.status === 'queued' && <div className="h-4 w-4 rounded-full bg-muted" />}
+                {result.status === 'standardizing' && <ImageIcon className="h-4 w-4 animate-pulse text-primary" />}
                 {result.status === 'processing' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                 {result.status === 'complete' && <CheckCircle className="h-4 w-4 text-primary" />}
                 {result.status === 'failed' && <XCircle className="h-4 w-4 text-destructive" />}
                 <span className="text-sm flex-1">{result.fileName}</span>
+                <span className="text-xs text-muted-foreground">
+                  {STATUS_LABELS[result.status]}
+                </span>
                 {result.residentName && (
                   <span className="text-sm text-muted-foreground">→ {result.residentName}</span>
                 )}
