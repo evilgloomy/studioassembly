@@ -115,6 +115,7 @@ export default function CaerholdAdminResidents() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="text-xs tracking-widest uppercase w-12"></TableHead>
               <TableHead className="text-xs tracking-widest uppercase">Name</TableHead>
               <TableHead className="text-xs tracking-widest uppercase">Handle</TableHead>
               <TableHead className="text-xs tracking-widest uppercase">Role</TableHead>
@@ -125,20 +126,33 @@ export default function CaerholdAdminResidents() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   Loading residents...
                 </TableCell>
               </TableRow>
             ) : residents?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No residents yet. Add your first resident!
                 </TableCell>
               </TableRow>
             ) : (
               residents?.map((resident) => (
                 <TableRow key={resident.id}>
-                  <TableCell className="font-medium">{resident.display_name}</TableCell>
+                  <TableCell className="w-12 pr-0">
+                    {(resident as any).avatar_url ? (
+                      <img src={(resident as any).avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-sm font-medium">
+                        {resident.display_name[0]}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <Link to={`/caerhold/residents/${resident.slug}`} className="hover:underline">
+                      {resident.display_name}
+                    </Link>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{resident.handle}</TableCell>
                   <TableCell className="text-muted-foreground">{resident.role_title || '—'}</TableCell>
                   <TableCell>

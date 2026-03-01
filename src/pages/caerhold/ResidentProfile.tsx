@@ -37,9 +37,13 @@ export default function CaerholdResidentProfile() {
         {/* Profile Header */}
         <div className="max-w-2xl mx-auto mb-12">
           <div className="flex items-center gap-6 mb-6">
-            <div className="h-24 w-24 bg-secondary rounded-full flex items-center justify-center text-4xl font-medium">
-              {resident.display_name[0]}
-            </div>
+            {(resident as any).avatar_url ? (
+              <img src={(resident as any).avatar_url} alt={resident.display_name} className="h-24 w-24 rounded-full object-cover" />
+            ) : (
+              <div className="h-24 w-24 bg-secondary rounded-full flex items-center justify-center text-4xl font-medium">
+                {resident.display_name[0]}
+              </div>
+            )}
             <div>
               <h1 className="text-3xl font-bold">{resident.display_name}</h1>
               <p className="text-muted-foreground">{resident.handle}</p>
