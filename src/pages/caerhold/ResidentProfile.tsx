@@ -98,12 +98,12 @@ export default function CaerholdResidentProfile() {
       <img
         src={botanicalLeaves}
         alt=""
-        className="fixed bottom-0 left-0 w-[400px] h-[400px] opacity-25 pointer-events-none z-0 hidden lg:block"
+        className="absolute bottom-0 left-0 w-[800px] h-[800px] opacity-25 pointer-events-none z-0 hidden lg:block"
       />
       <img
         src={botanicalLeaves}
         alt=""
-        className="fixed bottom-0 right-0 w-[400px] h-[400px] opacity-25 pointer-events-none z-0 hidden lg:block scale-x-[-1]"
+        className="absolute bottom-0 right-0 w-[800px] h-[800px] opacity-25 pointer-events-none z-0 hidden lg:block scale-x-[-1]"
       />
 
       {/* Hero Banner */}
