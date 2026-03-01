@@ -5,8 +5,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import type { CaerholdCanonRules } from '@/types/caerhold';
 import heroBanner from '@/assets/caerhold-banner.png';
-import botanicalLeft from '@/assets/botanical-left.png';
-import botanicalRight from '@/assets/botanical-right.png';
+import botanicalLeaves from '@/assets/botanical-leaves.svg';
 
 const TRAIT_COLORS = [
   'hsl(122, 39%, 49%)',  // soft green
@@ -144,14 +143,14 @@ export default function CaerholdResidentProfile() {
       {resident.bio && (
         <div className="relative max-w-2xl mx-auto mt-8 px-4">
           <img
-            src={botanicalLeft}
+            src={botanicalLeaves}
             alt=""
             className="absolute -left-16 top-1/2 -translate-y-1/2 w-32 h-32 opacity-30 pointer-events-none hidden lg:block"
           />
           <img
-            src={botanicalRight}
+            src={botanicalLeaves}
             alt=""
-            className="absolute -right-16 top-1/2 -translate-y-1/2 w-32 h-32 opacity-30 pointer-events-none hidden lg:block"
+            className="absolute -right-16 top-1/2 -translate-y-1/2 w-32 h-32 opacity-30 pointer-events-none hidden lg:block scale-x-[-1]"
           />
           <p className="text-foreground leading-relaxed text-lg text-center">{resident.bio}</p>
         </div>
