@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -155,6 +156,32 @@ export function LoginForm({ mode: initialMode = 'login' }: LoginFormProps) {
       >
         {isLoading ? (mode === 'signup' ? 'Creating...' : 'Signing in...') : (mode === 'signup' ? 'Create Account' : 'Sign In')}
       </Button>
+
+      {mode === 'login' && (
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={async () => {
+              if (!email) {
+                toast({ variant: 'destructive', title: 'Enter your email first' });
+                return;
+              }
+              const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/reset-password`,
+              });
+              if (error) {
+                toast({ variant: 'destructive', title: 'Error', description: error.message });
+              } else {
+                toast({ title: 'Check your email', description: 'A password reset link has been sent.' });
+              }
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            disabled={isLoading}
+          >
+            Forgot password?
+          </button>
+        </div>
+      )}
 
       <div className="text-center">
         <button
