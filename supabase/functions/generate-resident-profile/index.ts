@@ -46,7 +46,7 @@ serve(async (req) => {
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .in("role", ["caerhold_admin", "caerhold_editor"])
+      .in("role", ["admin", "editor", "caerhold_admin", "caerhold_editor"])
       .limit(1)
       .maybeSingle();
 
