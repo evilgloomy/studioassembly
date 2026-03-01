@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useCaerholdMedia, useUploadCaerholdMedia, useTagCaerholdMedia } from '@/hooks/caerhold/useCaerholdMedia';
+import { useCaerholdMedia, useUploadCaerholdMedia, useTagCaerholdMedia, useDeleteCaerholdMedia } from '@/hooks/caerhold/useCaerholdMedia';
 import { useCaerholdResidents } from '@/hooks/caerhold/useCaerholdResidents';
 import { useCaerholdLocations } from '@/hooks/caerhold/useCaerholdLocations';
 import { Button } from '@/components/ui/button';
@@ -15,17 +15,28 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Upload, Tag, Image, Check } from 'lucide-react';
+import { Upload, Tag, Image, Check, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CaerholdAdminMedia() {
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  const [deleteMediaId, setDeleteMediaId] = useState<string | null>(null);
   const [selectedResidents, setSelectedResidents] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
@@ -36,6 +47,7 @@ export default function CaerholdAdminMedia() {
   const { data: locations } = useCaerholdLocations();
   const uploadMutation = useUploadCaerholdMedia();
   const tagMutation = useTagCaerholdMedia();
+  const deleteMutation = useDeleteCaerholdMedia();
   const { toast } = useToast();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,6 +104,26 @@ export default function CaerholdAdminMedia() {
         title: 'Tagging failed',
         description: error.message || 'Failed to tag media.',
       });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteMediaId) return;
+
+    try {
+      await deleteMutation.mutateAsync(deleteMediaId);
+      toast({
+        title: 'Media deleted',
+        description: 'The media file has been permanently removed.',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Delete failed',
+        description: error.message || 'Failed to delete media. It may be in use by posts or residents.',
+      });
+    } finally {
+      setDeleteMediaId(null);
     }
   };
 
@@ -153,8 +185,18 @@ export default function CaerholdAdminMedia() {
                   className="w-full h-full object-cover"
                 />
               )}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2">
                 <Tag className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                <button
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded bg-destructive/80 hover:bg-destructive text-destructive-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteMediaId(item.id);
+                  }}
+                  title="Delete media"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
           ))}
@@ -245,6 +287,28 @@ export default function CaerholdAdminMedia() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteMediaId} onOpenChange={() => setDeleteMediaId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Media?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the media file and remove it from storage. If this media is used as a resident avatar or in posts, those references will be broken.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
