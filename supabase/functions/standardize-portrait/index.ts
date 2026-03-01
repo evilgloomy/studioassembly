@@ -8,7 +8,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const STANDARDIZE_PROMPT = `Using the provided reference image as the sole character reference, create a full CGI 3D render of this Lego minifigure as if it were a hero shot from 'The Lego Movie'. The render must look like it was produced by Animal Logic's rendering pipeline -- subsurface scattering on the plastic skin, micro-scratches and fingerprint smudges on glossy surfaces, and bright, even studio lighting with soft key light and subtle rim highlights. Use high-key lighting so the entire figure is well-lit with no dark shadows. Maintain absolute 1:1 fidelity to every detail in the reference: exact hair mould, precise facial print, all torso and leg printing, and any accessories. Pay close attention to the leg type: if the reference shows short, stubby legs (indicating a child minifigure), the render MUST use short legs -- do NOT replace them with standard full-length adult legs. The minifigure should be standing in a neutral pose on a perfectly seamless, pure #FFFFFF white background with no baseplate, stand, shadow catcher, ground plane, or shadow visible. The background must be completely flat white with zero gradient or grey tones. Output a single high-resolution image.`;
+const STANDARDIZE_PROMPT = `CRITICAL REQUIREMENT: The minifigure must be FLOATING against a perfectly seamless, pure #FFFFFF white void. There must be ABSOLUTELY NO baseplate, no ground plane, no stand, no pedestal, no surface, no shadow, no reflection, no shadow catcher -- nothing beneath or around the figure. The background must be a completely flat, featureless white with zero gradient, zero grey tones, and zero environmental elements.
+
+Using the provided reference image as the sole character reference, create a full CGI 3D render of this Lego minifigure as if it were a hero shot from 'The Lego Movie'. The render must look like it was produced by Animal Logic's rendering pipeline -- subsurface scattering on the plastic skin, micro-scratches and fingerprint smudges on glossy surfaces, and bright, even studio lighting with soft key light and subtle rim highlights. Use high-key lighting so the entire figure is well-lit with no dark shadows. Maintain absolute 1:1 fidelity to every detail in the reference: exact hair mould, precise facial print, all torso and leg printing, and any accessories. Pay close attention to the leg type: if the reference shows short, stubby legs (indicating a child minifigure), the render MUST use short legs -- do NOT replace them with standard full-length adult legs. The minifigure should be in a neutral standing pose. Output a single high-resolution image.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -54,7 +56,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
+        model: "google/gemini-3-pro-image-preview",
         messages: [
           {
             role: "user",
