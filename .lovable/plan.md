@@ -1,202 +1,176 @@
 
 
-# Phase 1: Districts, Connections, and Enhanced Welcome Page
+# Enhanced Locations: AI Profiles, Owners, and Rich Detail Pages
 
 ## Overview
 
-This plan adds districts as a geographic layer, resident connections, an interactive map page, and upgrades the Caerhold welcome page with stats, featured content, and district navigation. All new tables use the `caerhold_` prefix to match existing conventions.
+This plan enriches Caerhold locations with AI-generated profiles (from images), owner assignments (residents who run a location), and richer public detail pages. It mirrors the resident profile generation pattern already in the codebase.
 
 ---
 
 ## 1. Database Migration
 
-A single migration creates all new tables and alters existing ones.
+### Expand `caerhold_location_type` enum
 
-### New Tables
+Add new values: `cafe`, `restaurant`, `retail`, `civic`, `service`, `entertainment`, `office`
 
-**`caerhold_districts`**
-- id, slug (unique), name, tagline, description, hero_image_url, sort_order, is_published, map_hotspot (jsonb, nullable), created_at, updated_at
-- Indexes on sort_order and is_published
-- RLS: public SELECT where is_published = true, full CRUD for caerhold admins/editors
+### Add columns to `caerhold_locations`
 
-**`caerhold_resident_connections`**
-- id, resident_id (FK -> caerhold_residents), connected_resident_id (FK -> caerhold_residents), relation_type (text, default 'friend'), note (text), created_at
-- Unique constraint on (resident_id, connected_resident_id)
-- Indexes on both resident columns
-- RLS: public SELECT (for published residents), full CRUD for caerhold admins/editors
+| Column | Type | Default | Purpose |
+|--------|------|---------|---------|
+| is_published | boolean | false | Publish workflow |
+| hero_image_url | text | null | Display hero (separate from hero_media_id) |
+| ai_status | text | 'idle' | idle / queued / generated / error |
+| ai_generated_json | jsonb | null | Raw AI output |
+| ai_prompt_version | text | 'loc_v1' | Track prompt version |
+| ai_locked_fields | text[] | '{}' | Fields manually edited (skip on regenerate) |
+| short_blurb | text | null | 140-char summary |
+| category | text | null | cafe/shop/civic/etc (display label) |
+| vibe_tags | text[] | null | cozy, modern, etc |
+| signature_items | text[] | null | Menu items, products |
+| visitor_tips | text[] | null | Tips for visitors |
 
-**`caerhold_site_settings`**
-- key (text, primary key), value (jsonb), updated_at
-- RLS: public SELECT, admin/editor full CRUD
-- Used to store `caerhold_welcome` config: featured_district_ids, featured_post_ids, map_image_url
+### New table: `caerhold_location_media`
 
-### Altered Tables
+Multiple images per location (hero selection, AI input).
 
-**`caerhold_locations`** -- add column:
-- `district_id` uuid (FK -> caerhold_districts, ON DELETE SET NULL, nullable)
-- Index on district_id
+```text
+id           uuid PK
+location_id  uuid FK -> caerhold_locations ON DELETE CASCADE
+media_id     uuid FK -> caerhold_media ON DELETE CASCADE
+sort_order   int default 0
+UNIQUE(location_id, media_id)
+```
 
-**`caerhold_residents`** -- add columns:
-- `home_district_id` uuid (FK -> caerhold_districts, ON DELETE SET NULL, nullable)
-- `primary_work_location_id` uuid (FK -> caerhold_locations, ON DELETE SET NULL, nullable)
-- Indexes on both new columns
+RLS: public SELECT, admin/editor full CRUD.
+
+### New table: `caerhold_location_owners`
+
+Assign residents as owners/managers of a location.
+
+```text
+id           uuid PK
+location_id  uuid FK -> caerhold_locations ON DELETE CASCADE
+resident_id  uuid FK -> caerhold_residents ON DELETE CASCADE
+role         text default 'owner'
+note         text
+created_at   timestamptz
+UNIQUE(location_id, resident_id, role)
+```
+
+RLS: public SELECT, admin/editor full CRUD.
 
 ### Trigger
-- `update_updated_at_column` trigger on `caerhold_districts` (reuses existing function)
+
+`update_updated_at_column` on `caerhold_locations` (reuse existing function).
 
 ---
 
-## 2. TypeScript Types
+## 2. Edge Function: `generate-location-profile`
 
-**`src/types/caerhold.ts`** -- add:
-- `CaerholdDistrict` interface (matching new table)
-- `CaerholdDistrictInput` interface
-- `CaerholdResidentConnection` interface
-- `CaerholdSiteSettings` interface
-- Update `CaerholdResident` to include `home_district_id`, `primary_work_location_id`
-- Update `CaerholdLocation` to include `district_id`
-- Add `CaerholdResidentWithDistrict` extended type
+New edge function modeled on `generate-resident-profile`.
 
----
+- **Input**: `{ location_id: string }`
+- **Flow**:
+  1. Verify auth + caerhold admin role
+  2. Fetch location + its `caerhold_location_media` images (up to 6)
+  3. Set `ai_status = 'processing'`
+  4. Call Lovable AI (google/gemini-2.5-flash) with vision + tool calling
+  5. Parse structured JSON response
+  6. Sanitize strings (reuse existing sanitizer pattern)
+  7. Map fields to location columns, respecting `ai_locked_fields`
+  8. Set `ai_status = 'generated'`, store raw output in `ai_generated_json`
 
-## 3. Data Hooks (new files)
+- **Tool schema** returned by AI:
+  - name, category, short_blurb, description, vibe_tags, signature_items, visitor_tips, notable_details, confidence (name/category scores)
 
-### `src/hooks/caerhold/useCaerholdDistricts.ts`
-- `useCaerholdDistricts()` -- fetch all published districts ordered by sort_order
-- `useCaerholdDistrict(slug)` -- single district by slug
-- `useCreateCaerholdDistrict()` -- mutation
-- `useUpdateCaerholdDistrict()` -- mutation
-- `useDeleteCaerholdDistrict()` -- mutation
+- **Prompt**: Municipal tourism directory tone, infer only from visible cues, strict JSON via tool calling. Categories: cafe, restaurant, retail, residential, civic, park, service, landmark, entertainment, office.
 
-### `src/hooks/caerhold/useCaerholdConnections.ts`
-- `useCaerholdResidentConnections(residentId)` -- fetch connections with joined resident data
-- `useCreateConnection()` -- mutation
-- `useDeleteConnection()` -- mutation
-
-### `src/hooks/caerhold/useCaerholdSiteSettings.ts`
-- `useCaerholdSiteSettings(key)` -- fetch settings by key
-- `useUpdateCaerholdSiteSettings()` -- upsert mutation
-
-### Updated hooks
-- **`useCaerholdResidents.ts`** -- update `mapResident` and queries to join `home_district:caerhold_districts(*)` and `work_location:caerhold_locations(*)`
-- **`useCaerholdLocations.ts`** -- update queries to join `district:caerhold_districts(*)`, add `useCaerholdLocationsByDistrict(districtId)`
+- **Config**: `verify_jwt = false` in config.toml (validate in code like existing functions).
 
 ---
 
-## 4. Admin CMS Pages
+## 3. TypeScript Types
 
-### New: `src/pages/caerhold/admin/Districts.tsx`
-- Table listing all districts with name, tagline, sort_order, published status
-- Create dialog (name, slug, tagline, description, hero_image_url, sort_order, is_published)
-- Delete with confirmation
-- Edit link to district editor
+Update `src/types/caerhold.ts`:
 
-### New: `src/pages/caerhold/admin/DistrictEditor.tsx`
-- Full edit form: slug, name, tagline, description, hero_image_url, sort_order, is_published
-- Map hotspot editor: simple form fields for rect (x, y, w, h) stored as JSON
-- Publish/unpublish toggle
-
-### New: `src/pages/caerhold/admin/WelcomeConfig.tsx`
-- Select featured districts (multi-select from published districts)
-- Select featured posts (multi-select from published posts)
-- Set map image URL
-- Saves to `caerhold_site_settings` with key `caerhold_welcome`
-
-### Updated: `src/pages/caerhold/admin/Locations.tsx`
-- Add `district_id` dropdown to the create dialog
-- Show district badge in the table
-
-### Updated: `src/pages/caerhold/admin/ResidentEditor.tsx`
-- Add `home_district_id` dropdown (in Identity or Lore section)
-- Add `primary_work_location_id` dropdown
-- Add Connections section: pick resident + relation_type + optional note, list existing connections with delete
-
-### Updated: `src/components/admin/AdminSidebar.tsx`
-- Add "Districts" nav item under Caerhold section
-- Add "Welcome Config" nav item
+- Update `CaerholdLocationType` to include new enum values
+- Add new fields to `CaerholdLocation` interface (is_published, ai_status, short_blurb, category, vibe_tags, signature_items, visitor_tips, hero_image_url, ai_generated_json, ai_locked_fields)
+- Add `CaerholdLocationMedia` interface
+- Add `CaerholdLocationOwner` interface
+- Add `CaerholdLocationInput` updates for new fields
 
 ---
 
-## 5. Frontend Public Pages
+## 4. Data Hooks
 
-### New Routes (added to App.tsx)
-- `/caerhold/map` -- MapPage
-- `/caerhold/districts` -- DistrictsIndex
-- `/caerhold/districts/:slug` -- DistrictDetail
+### New: `src/hooks/caerhold/useCaerholdLocationMedia.ts`
+- `useCaerholdLocationMedia(locationId)` -- fetch media for a location
+- `useAddLocationMedia()` -- link existing caerhold_media to location
+- `useRemoveLocationMedia()` -- unlink
+- `useReorderLocationMedia()` -- update sort_order
 
-### New: `src/pages/caerhold/Map.tsx`
-- Renders map image from site settings
-- Overlays clickable hotspots from `caerhold_districts.map_hotspot`
-- Each hotspot is an absolutely-positioned div using normalized coordinates (x*100%, y*100%, w*100%, h*100%)
-- onClick navigates to `/caerhold/districts/:slug`
-- Responsive: container is position:relative, image fills width
+### New: `src/hooks/caerhold/useCaerholdLocationOwners.ts`
+- `useCaerholdLocationOwners(locationId)` -- fetch owners with joined resident data
+- `useAddLocationOwner()` -- mutation
+- `useRemoveLocationOwner()` -- mutation
 
-### New: `src/pages/caerhold/Districts.tsx`
-- Grid of district cards (hero image + name + tagline)
-- Links to `/caerhold/districts/:slug`
-
-### New: `src/pages/caerhold/DistrictDetail.tsx`
-- Hero section with district image, name, tagline, description
-- Locations grid: locations where district_id matches
-- Featured residents: residents where home_district_id matches
-- "More coming soon" fallback if no locations/residents yet
-
-### Updated: `src/pages/caerhold/Index.tsx` (Welcome page)
-- **StatsBar**: counts of residents, locations, districts, posts (simple count queries)
-- **Featured Districts grid**: from site settings or top N by sort_order
-- **Featured Stories**: 3 post cards from site settings or latest published
-- **Map preview**: small map image linking to /caerhold/map
-- Keep existing hero + about sections, integrate new sections below
-
-### Updated: `src/pages/caerhold/ResidentProfile.tsx`
-- Add "Lives in" district link (if home_district_id set)
-- Add "Works at" location link (if primary_work_location_id set)
-- Add Connections section: chips/cards showing connected residents with relation type, linking to their profiles
-- Add Appearances grid: post media images from this resident's published posts (already have `useCaerholdResidentPosts`)
-
-### Updated: `src/components/caerhold/CaerholdHeader.tsx`
-- Add "Map" and "Districts" to navigation links
+### Updated: `useCaerholdLocations.ts`
+- Update `mapLocation` to include new fields
+- Update create/update mutations to handle new columns
+- Add `useGenerateLocationProfile()` mutation (calls edge function)
 
 ---
 
-## 6. New Components
+## 5. Admin CMS Changes
 
-### `src/components/caerhold/StatsBar.tsx`
-- Displays 3-4 stat cards (residents, locations, districts, stories)
-- Each stat shows count + label
+### New: Location Editor page (`src/pages/caerhold/admin/LocationEditor.tsx`)
 
-### `src/components/caerhold/DistrictCard.tsx`
-- Reusable card: hero image, name, tagline
-- Used in welcome page and districts index
+Full edit page (like ResidentEditor) with sections:
 
-### `src/components/caerhold/FeaturedStories.tsx`
-- Horizontal row of 3 post cards with image, caption excerpt, resident name
+- **Core fields**: Name, slug, type, district dropdown, is_published toggle, description, short_blurb, category
+- **Media section**: Upload/pick images from caerhold_media, set hero, reorder. Shows grid of attached images.
+- **AI Panel**: "Generate from Images" button, status indicator, after generation shows editable fields (category, short_blurb, description, vibe_tags, signature_items, visitor_tips). Tracks locked fields.
+- **Owner Panel**: Search/select residents, assign role (owner/co-owner/manager/founder), display owner cards with remove button.
+- **Detail fields**: vibe_tags, signature_items, visitor_tips (comma-separated inputs)
 
-### `src/components/caerhold/MapHotspotImage.tsx`
-- Renders map image with overlay hotspots
-- Props: imageUrl, districts (with map_hotspot data)
-- Reused on Map page and optionally on welcome page
+### Updated: Admin Locations list (`src/pages/caerhold/admin/Locations.tsx`)
+- Add district_id dropdown to create dialog
+- Show district badge + published status in table
+- Add edit link to new LocationEditor page
 
-### `src/components/caerhold/ResidentConnectionCard.tsx`
-- Small card/chip showing connected resident avatar, name, relation type
+### Updated: `src/App.tsx`
+- Add route: `caerhold/locations/:id` -> LocationEditor
+
+---
+
+## 6. Public Frontend Updates
+
+### Updated: Locations index (`src/pages/caerhold/Locations.tsx`)
+- Show hero image instead of MapPin placeholder
+- Add category badge, district badge
+- Show owner mini-chip ("Owned by Name")
+- Add category filter alongside type filter
+
+### Updated: Location detail page (`src/pages/caerhold/LocationPage.tsx`)
+- Hero image section
+- Short blurb + full description
+- "Visitor Info" blocks: tips, signature items, vibe tags as styled badges
+- Owner section with resident card(s) linking to profiles
+- Keep existing posts section
 
 ---
 
 ## 7. Implementation Order
 
-1. **Database migration** -- create all tables, alter existing ones, add RLS + indexes
-2. **Types update** -- add new interfaces to caerhold.ts
-3. **Data hooks** -- districts, connections, site settings (new files), update existing hooks
-4. **Admin sidebar** -- add Districts + Welcome Config nav items
-5. **Admin districts** -- list + editor pages
-6. **Admin updates** -- location editor (district dropdown), resident editor (district + work location + connections)
-7. **Admin welcome config** -- featured content picker
-8. **Frontend components** -- StatsBar, DistrictCard, MapHotspotImage, FeaturedStories, ResidentConnectionCard
-9. **Frontend pages** -- Districts index, District detail, Map page
-10. **Welcome page upgrade** -- integrate StatsBar, featured districts, featured stories, map preview
-11. **Resident profile upgrade** -- lives in, works at, connections, appearances
-12. **Header update** -- add Map + Districts links
-13. **Routes** -- register new routes in App.tsx
+1. Database migration (expand enum, add columns, create tables, RLS)
+2. Types update
+3. Edge function: generate-location-profile
+4. Data hooks (location media, owners, updated locations)
+5. Admin LocationEditor page
+6. Admin Locations list updates + route
+7. Public Locations index upgrade
+8. Public LocationPage detail upgrade
 
 ---
 
@@ -204,9 +178,8 @@ A single migration creates all new tables and alters existing ones.
 
 | Table | Public SELECT | Admin CRUD |
 |-------|--------------|------------|
-| caerhold_districts | WHERE is_published = true | is_caerhold_admin_or_editor |
-| caerhold_resident_connections | true (or via published residents) | is_caerhold_admin_or_editor |
-| caerhold_site_settings | true | is_caerhold_admin_or_editor |
+| caerhold_location_media | true | is_caerhold_admin_or_editor |
+| caerhold_location_owners | true | is_caerhold_admin_or_editor |
 
-All policies use the existing `is_caerhold_admin_or_editor(auth.uid())` security definer function, matching the pattern of every other `caerhold_*` table.
+Existing `caerhold_locations` policies remain; the `is_published` filter will be added to the public SELECT policy.
 
