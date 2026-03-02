@@ -16,8 +16,16 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera, Undo2, Sparkles, Check, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera, Undo2, Sparkles, Check, Trash2, Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  useCaerholdTagDefinitions,
+  useCaerholdResidentTagAssignments,
+  useCreateTagDefinition,
+  useAssignTag,
+  useUnassignTag,
+  type TagDefinition,
+} from '@/hooks/caerhold/useCaerholdResidentTags';
 
 export default function ResidentEditor() {
   const { id } = useParams<{ id: string }>();
@@ -578,6 +586,9 @@ export default function ResidentEditor() {
         </div>
       </section>
 
+      {/* Tags */}
+      {id && <ResidentTagsSection residentId={id} />}
+
       {/* Actions */}
       <div className="flex gap-3 flex-wrap">
         <Button onClick={handleSave} disabled={updateMutation.isPending}>
@@ -635,5 +646,112 @@ export default function ResidentEditor() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+function ResidentTagsSection({ residentId }: { residentId: string }) {
+  const [newTagName, setNewTagName] = useState('');
+  const { toast } = useToast();
+  const { data: allTags } = useCaerholdTagDefinitions();
+  const { data: assignments } = useCaerholdResidentTagAssignments(residentId);
+  const createTag = useCreateTagDefinition();
+  const assignTag = useAssignTag();
+  const unassignTag = useUnassignTag();
+
+  const assignedTagIds = new Set((assignments || []).map(a => a.tag_definition_id));
+  const availableTags = (allTags || []).filter(t => !assignedTagIds.has(t.id));
+
+  const handleCreateAndAssign = async () => {
+    const name = newTagName.trim();
+    if (!name) return;
+    try {
+      const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const tag = await createTag.mutateAsync({ name, slug });
+      await assignTag.mutateAsync({ resident_id: residentId, tag_definition_id: tag.id });
+      setNewTagName('');
+      toast({ title: 'Tag created and assigned' });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    }
+  };
+
+  const handleAssign = async (tagId: string) => {
+    try {
+      await assignTag.mutateAsync({ resident_id: residentId, tag_definition_id: tagId });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    }
+  };
+
+  const handleUnassign = async (assignmentId: string) => {
+    try {
+      await unassignTag.mutateAsync(assignmentId);
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    }
+  };
+
+  return (
+    <section className="space-y-4 border border-border p-6">
+      <h2 className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Tags</h2>
+
+      {/* Assigned tags */}
+      <div className="flex flex-wrap gap-2">
+        {(assignments || []).map(a => {
+          const tag = a.tag as unknown as TagDefinition | undefined;
+          if (!tag) return null;
+          return (
+            <Badge
+              key={a.id}
+              variant="outline"
+              className="gap-1 cursor-pointer"
+              style={{ borderColor: tag.color, color: tag.color }}
+              onClick={() => handleUnassign(a.id)}
+            >
+              {tag.name}
+              <X className="h-3 w-3" />
+            </Badge>
+          );
+        })}
+        {(!assignments || assignments.length === 0) && (
+          <p className="text-xs text-muted-foreground">No tags assigned.</p>
+        )}
+      </div>
+
+      {/* Add existing tag */}
+      {availableTags.length > 0 && (
+        <div className="space-y-1">
+          <Label className="text-xs tracking-widest uppercase">Add Existing Tag</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {availableTags.map(tag => (
+              <button
+                key={tag.id}
+                onClick={() => handleAssign(tag.id)}
+                className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
+              >
+                <Plus className="h-3 w-3" /> {tag.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Create new tag */}
+      <div className="space-y-1">
+        <Label className="text-xs tracking-widest uppercase">Create New Tag</Label>
+        <div className="flex gap-2">
+          <Input
+            value={newTagName}
+            onChange={e => setNewTagName(e.target.value)}
+            placeholder="e.g. baker, council member"
+            className="flex-1"
+            onKeyDown={e => e.key === 'Enter' && handleCreateAndAssign()}
+          />
+          <Button variant="outline" size="sm" onClick={handleCreateAndAssign} disabled={!newTagName.trim()}>
+            <Plus className="mr-1 h-4 w-4" /> Add
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }

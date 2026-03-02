@@ -416,6 +416,63 @@ export type Database = {
           },
         ]
       }
+      caerhold_resident_tag_assignments: {
+        Row: {
+          id: string
+          resident_id: string
+          tag_definition_id: string
+        }
+        Insert: {
+          id?: string
+          resident_id: string
+          tag_definition_id: string
+        }
+        Update: {
+          id?: string
+          resident_id?: string
+          tag_definition_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_resident_tag_assignments_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_resident_tag_assignments_tag_definition_id_fkey"
+            columns: ["tag_definition_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_resident_tag_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caerhold_resident_tag_definitions: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       caerhold_residents: {
         Row: {
           avatar_media_id: string | null
