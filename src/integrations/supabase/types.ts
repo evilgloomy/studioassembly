@@ -56,42 +56,156 @@ export type Database = {
         }
         Relationships: []
       }
+      caerhold_location_media: {
+        Row: {
+          created_at: string | null
+          id: string
+          location_id: string
+          media_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location_id: string
+          media_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location_id?: string
+          media_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_location_media_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_location_media_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caerhold_location_owners: {
+        Row: {
+          created_at: string | null
+          id: string
+          location_id: string
+          note: string | null
+          resident_id: string
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location_id: string
+          note?: string | null
+          resident_id: string
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location_id?: string
+          note?: string | null
+          resident_id?: string
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_location_owners_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_location_owners_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caerhold_locations: {
         Row: {
+          ai_generated_json: Json | null
+          ai_locked_fields: string[] | null
+          ai_prompt_version: string | null
+          ai_status: string | null
           canon_rules: Json
+          category: string | null
           created_at: string
           description: string | null
           district_id: string | null
+          hero_image_url: string | null
           hero_media_id: string | null
           id: string
+          is_published: boolean | null
           name: string
+          short_blurb: string | null
+          signature_items: string[] | null
           slug: string
           type: Database["public"]["Enums"]["caerhold_location_type"]
           updated_at: string
+          vibe_tags: string[] | null
+          visitor_tips: string[] | null
         }
         Insert: {
+          ai_generated_json?: Json | null
+          ai_locked_fields?: string[] | null
+          ai_prompt_version?: string | null
+          ai_status?: string | null
           canon_rules?: Json
+          category?: string | null
           created_at?: string
           description?: string | null
           district_id?: string | null
+          hero_image_url?: string | null
           hero_media_id?: string | null
           id?: string
+          is_published?: boolean | null
           name: string
+          short_blurb?: string | null
+          signature_items?: string[] | null
           slug: string
           type: Database["public"]["Enums"]["caerhold_location_type"]
           updated_at?: string
+          vibe_tags?: string[] | null
+          visitor_tips?: string[] | null
         }
         Update: {
+          ai_generated_json?: Json | null
+          ai_locked_fields?: string[] | null
+          ai_prompt_version?: string | null
+          ai_status?: string | null
           canon_rules?: Json
+          category?: string | null
           created_at?: string
           description?: string | null
           district_id?: string | null
+          hero_image_url?: string | null
           hero_media_id?: string | null
           id?: string
+          is_published?: boolean | null
           name?: string
+          short_blurb?: string | null
+          signature_items?: string[] | null
           slug?: string
           type?: Database["public"]["Enums"]["caerhold_location_type"]
           updated_at?: string
+          vibe_tags?: string[] | null
+          visitor_tips?: string[] | null
         }
         Relationships: [
           {
@@ -1052,6 +1166,13 @@ export type Database = {
         | "residence"
         | "street"
         | "park"
+        | "cafe"
+        | "restaurant"
+        | "retail"
+        | "civic"
+        | "service"
+        | "entertainment"
+        | "office"
       caerhold_post_status: "draft" | "approved" | "scheduled" | "published"
       post_status: "draft" | "scheduled" | "published" | "archived"
     }
@@ -1195,6 +1316,13 @@ export const Constants = {
         "residence",
         "street",
         "park",
+        "cafe",
+        "restaurant",
+        "retail",
+        "civic",
+        "service",
+        "entertainment",
+        "office",
       ],
       caerhold_post_status: ["draft", "approved", "scheduled", "published"],
       post_status: ["draft", "scheduled", "published", "archived"],

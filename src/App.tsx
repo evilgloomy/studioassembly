@@ -52,6 +52,7 @@ import CaerholdResidentEditor from "./pages/caerhold/admin/ResidentEditor";
 import CaerholdAdminDistricts from "./pages/caerhold/admin/Districts";
 import CaerholdDistrictEditor from "./pages/caerhold/admin/DistrictEditor";
 import CaerholdWelcomeConfig from "./pages/caerhold/admin/WelcomeConfig";
+import CaerholdLocationEditor from "./pages/caerhold/admin/LocationEditor";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
               <Route path="caerhold/residents/drafts" element={<CaerholdResidentDrafts />} />
               <Route path="caerhold/residents/:id" element={<CaerholdResidentEditor />} />
               <Route path="caerhold/locations" element={<CaerholdAdminLocations />} />
+              <Route path="caerhold/locations/:id" element={<CaerholdLocationEditor />} />
               <Route path="caerhold/districts" element={<CaerholdAdminDistricts />} />
               <Route path="caerhold/districts/:id" element={<CaerholdDistrictEditor />} />
               <Route path="caerhold/welcome-config" element={<CaerholdWelcomeConfig />} />

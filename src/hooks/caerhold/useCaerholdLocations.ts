@@ -11,6 +11,11 @@ function mapLocation(row: any): CaerholdLocation {
     ...row,
     type: row.type as CaerholdLocationType,
     canon_rules: (row.canon_rules || {}) as CaerholdCanonRules,
+    ai_locked_fields: row.ai_locked_fields || [],
+    vibe_tags: row.vibe_tags || null,
+    signature_items: row.signature_items || null,
+    visitor_tips: row.visitor_tips || null,
+    is_published: row.is_published ?? false,
   };
 }
 
@@ -83,7 +88,14 @@ export function useCreateCaerholdLocation() {
           description: input.description || null,
           canon_rules: (input.canon_rules || {}) as Json,
           hero_media_id: input.hero_media_id || null,
-        })
+          district_id: input.district_id || null,
+          is_published: input.is_published ?? false,
+          short_blurb: input.short_blurb || null,
+          category: input.category || null,
+          vibe_tags: input.vibe_tags || null,
+          signature_items: input.signature_items || null,
+          visitor_tips: input.visitor_tips || null,
+        } as any)
         .select()
         .single();
 
@@ -108,6 +120,15 @@ export function useUpdateCaerholdLocation() {
       if (input.description !== undefined) updateData.description = input.description;
       if (input.canon_rules !== undefined) updateData.canon_rules = input.canon_rules as Json;
       if (input.hero_media_id !== undefined) updateData.hero_media_id = input.hero_media_id;
+      if (input.district_id !== undefined) updateData.district_id = input.district_id;
+      if (input.is_published !== undefined) updateData.is_published = input.is_published;
+      if (input.hero_image_url !== undefined) updateData.hero_image_url = input.hero_image_url;
+      if (input.short_blurb !== undefined) updateData.short_blurb = input.short_blurb;
+      if (input.category !== undefined) updateData.category = input.category;
+      if (input.vibe_tags !== undefined) updateData.vibe_tags = input.vibe_tags;
+      if (input.signature_items !== undefined) updateData.signature_items = input.signature_items;
+      if (input.visitor_tips !== undefined) updateData.visitor_tips = input.visitor_tips;
+      if (input.ai_locked_fields !== undefined) updateData.ai_locked_fields = input.ai_locked_fields;
 
       const { data, error } = await supabase
         .from('caerhold_locations')

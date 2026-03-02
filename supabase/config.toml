@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.standardize-portrait]
 verify_jwt = false
+
+[functions.generate-location-profile]
+verify_jwt = false
