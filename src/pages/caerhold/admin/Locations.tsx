@@ -5,6 +5,7 @@ import {
   useCreateCaerholdLocation, 
   useDeleteCaerholdLocation 
 } from '@/hooks/caerhold/useCaerholdLocations';
+import { useCaerholdDistricts } from '@/hooks/caerhold/useCaerholdDistricts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,15 +46,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { locationTypeLabels } from '@/data/caerhold-constants';
 import type { CaerholdLocationType } from '@/types/caerhold';
-
-const locationTypeLabels: Record<CaerholdLocationType, string> = {
-  landmark: 'Landmark',
-  business: 'Business',
-  residence: 'Residence',
-  street: 'Street',
-  park: 'Park',
-};
 
 export default function CaerholdAdminLocations() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -63,9 +57,11 @@ export default function CaerholdAdminLocations() {
     slug: '',
     type: 'landmark' as CaerholdLocationType,
     description: '',
+    district_id: '',
   });
 
   const { data: locations, isLoading } = useCaerholdLocations();
+  const { data: districts } = useCaerholdDistricts(false);
   const createMutation = useCreateCaerholdLocation();
   const deleteMutation = useDeleteCaerholdLocation();
   const { toast } = useToast();
@@ -77,13 +73,14 @@ export default function CaerholdAdminLocations() {
         slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-'),
         type: formData.type,
         description: formData.description || null,
+        district_id: formData.district_id || null,
       });
       toast({
         title: 'Location created',
         description: `${formData.name} has been added to Caerhold.`,
       });
       setShowCreateDialog(false);
-      setFormData({ name: '', slug: '', type: 'landmark', description: '' });
+      setFormData({ name: '', slug: '', type: 'landmark', description: '', district_id: '' });
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -128,20 +125,21 @@ export default function CaerholdAdminLocations() {
             <TableRow>
               <TableHead className="text-xs tracking-widest uppercase">Name</TableHead>
               <TableHead className="text-xs tracking-widest uppercase">Type</TableHead>
-              <TableHead className="text-xs tracking-widest uppercase">Description</TableHead>
+              <TableHead className="text-xs tracking-widest uppercase">District</TableHead>
+              <TableHead className="text-xs tracking-widest uppercase">Status</TableHead>
               <TableHead className="text-xs tracking-widest uppercase text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   Loading locations...
                 </TableCell>
               </TableRow>
             ) : locations?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No locations yet. Add your first location!
                 </TableCell>
               </TableRow>
@@ -154,8 +152,13 @@ export default function CaerholdAdminLocations() {
                       {locationTypeLabels[location.type]}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground max-w-xs truncate">
-                    {location.description || '—'}
+                  <TableCell className="text-muted-foreground">
+                    {districts?.find(d => d.id === location.district_id)?.name || '-'}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={location.is_published ? 'default' : 'secondary'}>
+                      {location.is_published ? 'Published' : 'Draft'}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -221,6 +224,22 @@ export default function CaerholdAdminLocations() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs tracking-widest uppercase">District</Label>
+              <Select
+                value={formData.district_id || 'none'}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, district_id: value === 'none' ? '' : value }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {districts?.map(d => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

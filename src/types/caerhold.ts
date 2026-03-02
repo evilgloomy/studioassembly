@@ -5,7 +5,7 @@
 // Enums
 export type CaerholdAuthorType = 'resident' | 'location';
 export type CaerholdPostStatus = 'draft' | 'approved' | 'scheduled' | 'published';
-export type CaerholdLocationType = 'landmark' | 'business' | 'residence' | 'street' | 'park';
+export type CaerholdLocationType = 'landmark' | 'business' | 'residence' | 'street' | 'park' | 'cafe' | 'restaurant' | 'retail' | 'civic' | 'service' | 'entertainment' | 'office';
 export type CaerholdRelationType = 'friend' | 'coworker' | 'rival' | 'family' | 'neighbor';
 
 // Tone Profile for residents (controls AI caption generation voice)
@@ -76,8 +76,40 @@ export interface CaerholdLocation {
   canon_rules: CaerholdCanonRules;
   hero_media_id: string | null;
   district_id: string | null;
+  is_published: boolean;
+  hero_image_url: string | null;
+  ai_status: 'idle' | 'queued' | 'generated' | 'error';
+  ai_generated_json: Record<string, any> | null;
+  ai_prompt_version: string;
+  ai_locked_fields: string[];
+  short_blurb: string | null;
+  category: string | null;
+  vibe_tags: string[] | null;
+  signature_items: string[] | null;
+  visitor_tips: string[] | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface CaerholdLocationMedia {
+  id: string;
+  location_id: string;
+  media_id: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface CaerholdLocationOwner {
+  id: string;
+  location_id: string;
+  resident_id: string;
+  role: string;
+  note: string | null;
+  created_at: string;
+}
+
+export interface CaerholdLocationOwnerWithResident extends CaerholdLocationOwner {
+  resident?: CaerholdResident | null;
 }
 
 export interface CaerholdResidentConnection {
@@ -221,6 +253,15 @@ export interface CaerholdLocationInput {
   description?: string | null;
   canon_rules?: CaerholdCanonRules;
   hero_media_id?: string | null;
+  district_id?: string | null;
+  is_published?: boolean;
+  hero_image_url?: string | null;
+  short_blurb?: string | null;
+  category?: string | null;
+  vibe_tags?: string[] | null;
+  signature_items?: string[] | null;
+  visitor_tips?: string[] | null;
+  ai_locked_fields?: string[];
 }
 
 export interface CaerholdMediaUpload {

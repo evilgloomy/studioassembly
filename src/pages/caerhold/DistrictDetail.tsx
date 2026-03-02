@@ -6,11 +6,8 @@ import { useParams, Link } from 'react-router-dom';
 import { MapPin, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useMemo } from 'react';
+import { locationTypeLabels } from '@/data/caerhold-constants';
 import type { CaerholdLocationType } from '@/types/caerhold';
-
-const locationTypeLabels: Record<CaerholdLocationType, string> = {
-  landmark: 'Landmark', business: 'Business', residence: 'Residence', street: 'Street', park: 'Park',
-};
 
 export default function CaerholdDistrictDetail() {
   const { slug } = useParams<{ slug: string }>();
