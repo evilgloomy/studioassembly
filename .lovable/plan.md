@@ -1,47 +1,83 @@
 
 
-# Redesign Resident Profile Page -- Larger Photo, Color Badges, Decorative Botanicals
+## Plan: Add Avatar Images and Resident Tags to the Residents Directory
 
-## Changes Overview
+### 1. Show Avatar Images on Resident Cards
 
-### 1. Larger Portrait Photo
-The current portrait uses `object-contain` inside a 280x280 container, making the minifigure appear tiny. Fix by switching to `object-cover` and increasing the container size to ~320x380px so the figure fills the frame, matching the reference where the character is prominently displayed.
+The `useCaerholdResidents` hook already fetches `avatar_url` from the database. The Residents listing page currently shows a placeholder circle with the resident's initial. We'll replace this with the actual avatar image when available, falling back to the initial.
 
-### 2. Color-Coded Personality Badges
-The reference shows personality traits as colored pill badges (greens and teals). Add a rotating set of nature-inspired accent colors to the personality badges:
-- Soft green (`#4CAF50`), teal (`#26A69A`), olive (`#7CB342`), forest (`#2E7D32`)
-- Each trait gets a colored background with white text, rendered as rounded pills
+**File: `src/pages/caerhold/Residents.tsx`**
+- Import `Avatar`, `AvatarImage`, `AvatarFallback` from the existing UI components
+- Replace the plain `div` circle with an `Avatar` component that shows the resident's portrait image (using `avatar_url`)
+- Apply the same `scale-[2]` zoom technique used on the profile page so the minifig fills the circular frame
+- Keep the initial letter as fallback for residents without an avatar
 
-### 3. Remove Portrait Gallery
-Delete the entire "Portrait Gallery" section (lines 183-196) from the page. Only the main hero portrait will be shown.
+### 2. Create a Resident Tags System
 
-### 4. Generate Botanical Leaf Decorations
-The reference shows decorative botanical/leaf illustrations flanking the bio section and scattered around the page edges. Create an edge function that uses the AI image generation model to produce transparent PNG leaf/botanical decorative assets, then store them in the media bucket for use on the page.
+Add a new `caerhold_resident_tags` table to allow tagging residents with searchable labels (e.g., "baker", "parent", "council member", "park district").
 
-Specifically, generate 2 assets:
-- **Left botanical cluster** -- a watercolor-style arrangement of leaves/branches for the left side of the bio
-- **Right botanical cluster** -- a mirrored/complementary arrangement for the right side
+**Database Migration:**
+- Create `caerhold_resident_tag_definitions` table (id, name, slug, color, created_at) for the tag library
+- Create `caerhold_resident_tag_assignments` junction table (id, resident_id, tag_definition_id) linking residents to tags
+- Add RLS: public SELECT on both tables, admin/editor full access
+- Add unique constraints on slug and on the resident+tag pair
 
-These will be stored in `public/caerhold/` and imported as static assets. The edge function generates them once, then we embed the resulting URLs.
+**Data Hook: `src/hooks/caerhold/useCaerholdResidentTags.ts`**
+- Fetch all tag definitions
+- Fetch tags for a specific resident
+- CRUD mutations for tag definitions and assignments
 
-**Alternative (simpler, recommended):** Instead of generating images via edge function, use inline SVG leaf decorations directly in the component. This avoids storage complexity and loads instantly. The SVGs will be subtle, muted-green botanical line drawings matching the reference aesthetic.
+**Residents List Page Updates (`src/pages/caerhold/Residents.tsx`):**
+- Fetch resident tags alongside residents
+- Display tag badges on each resident card below the bio
+- Extend the search filter to also match against tag names
+- Add clickable tag filter chips above the grid so users can filter by tag
 
-### 5. Overall Layout Polish
-- Bio section gets the decorative leaf SVGs positioned absolutely on left and right
-- Detail cards get slightly more padding and refined typography
-- Personality card title bold and uppercase matching reference
-- Lore card uses bullet points with bold keys matching reference exactly
+**Admin Resident Editor Updates (`src/pages/caerhold/admin/ResidentEditor.tsx`):**
+- Add a tags section where admins can assign/remove tags from a resident
+- Allow creating new tags inline
 
-## Technical Details
+### Technical Details
 
-**File: `src/pages/caerhold/ResidentProfile.tsx`**
+**Migration SQL:**
+```sql
+CREATE TABLE public.caerhold_resident_tag_definitions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  color text DEFAULT '#4a7c59',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-1. Change portrait container from `w-[280px] h-[280px]` to `w-[320px] h-[380px]`
-2. Change image class from `object-contain` to `object-cover` with top alignment
-3. Add color array for personality badges: cycle through green/teal colors
-4. Remove portrait gallery section entirely (lines 183-196)
-5. Add inline SVG botanical decorations positioned around the bio text
-6. Style personality badges with colored backgrounds instead of the current `variant="secondary"`
+ALTER TABLE public.caerhold_resident_tag_definitions ENABLE ROW LEVEL SECURITY;
 
-No database changes needed. No new edge functions -- using inline SVGs for the botanical decorations keeps it simple and fast.
+CREATE POLICY "Tags publicly viewable" ON public.caerhold_resident_tag_definitions
+  FOR SELECT USING (true);
+CREATE POLICY "Admins manage tags" ON public.caerhold_resident_tag_definitions
+  FOR ALL USING (is_caerhold_admin_or_editor(auth.uid()));
+
+CREATE TABLE public.caerhold_resident_tag_assignments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  resident_id uuid NOT NULL REFERENCES public.caerhold_residents(id) ON DELETE CASCADE,
+  tag_definition_id uuid NOT NULL REFERENCES public.caerhold_resident_tag_definitions(id) ON DELETE CASCADE,
+  UNIQUE(resident_id, tag_definition_id)
+);
+
+ALTER TABLE public.caerhold_resident_tag_assignments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Assignments publicly viewable" ON public.caerhold_resident_tag_assignments
+  FOR SELECT USING (true);
+CREATE POLICY "Admins manage assignments" ON public.caerhold_resident_tag_assignments
+  FOR ALL USING (is_caerhold_admin_or_editor(auth.uid()));
+```
+
+**Query approach for the list page:**
+- The `useCaerholdResidents` query will be updated to join through the assignment table to fetch tags inline, keeping it to a single query
+- Alternatively, a separate lightweight query fetches all assignments + definitions and merges client-side (simpler, avoids complex join syntax in Supabase JS)
+
+**Files to create/modify:**
+1. **Database migration** -- new tables + RLS
+2. **`src/hooks/caerhold/useCaerholdResidentTags.ts`** -- new hook file
+3. **`src/pages/caerhold/Residents.tsx`** -- avatar images + tag display + tag filtering
+4. **`src/pages/caerhold/admin/ResidentEditor.tsx`** -- tag management UI for admins
 
