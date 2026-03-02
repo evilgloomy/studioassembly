@@ -68,6 +68,8 @@ const caerholdNavItems = [
   { path: '/admin/caerhold/residents/import', label: 'Import Residents', icon: Upload },
   { path: '/admin/caerhold/residents/drafts', label: 'Resident Drafts', icon: UserPlus },
   { path: '/admin/caerhold/locations', label: 'Locations', icon: MapPin },
+  { path: '/admin/caerhold/districts', label: 'Districts', icon: Landmark },
+  { path: '/admin/caerhold/welcome-config', label: 'Welcome Config', icon: PanelTop },
 ];
 
 export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {

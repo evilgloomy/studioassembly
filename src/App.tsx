@@ -35,6 +35,9 @@ import CaerholdResidents from "./pages/caerhold/Residents";
 import CaerholdResidentProfile from "./pages/caerhold/ResidentProfile";
 import CaerholdLocations from "./pages/caerhold/Locations";
 import CaerholdLocationPage from "./pages/caerhold/LocationPage";
+import CaerholdDistricts from "./pages/caerhold/Districts";
+import CaerholdDistrictDetail from "./pages/caerhold/DistrictDetail";
+import CaerholdMap from "./pages/caerhold/Map";
 
 // Caerhold admin pages
 import CaerholdAdminDashboard from "./pages/caerhold/admin/Dashboard";
@@ -46,6 +49,9 @@ import CaerholdAdminLocations from "./pages/caerhold/admin/Locations";
 import CaerholdResidentImport from "./pages/caerhold/admin/ResidentImport";
 import CaerholdResidentDrafts from "./pages/caerhold/admin/ResidentDrafts";
 import CaerholdResidentEditor from "./pages/caerhold/admin/ResidentEditor";
+import CaerholdAdminDistricts from "./pages/caerhold/admin/Districts";
+import CaerholdDistrictEditor from "./pages/caerhold/admin/DistrictEditor";
+import CaerholdWelcomeConfig from "./pages/caerhold/admin/WelcomeConfig";
 
 const queryClient = new QueryClient();
 
@@ -98,6 +104,9 @@ const App = () => (
               <Route path="caerhold/residents/drafts" element={<CaerholdResidentDrafts />} />
               <Route path="caerhold/residents/:id" element={<CaerholdResidentEditor />} />
               <Route path="caerhold/locations" element={<CaerholdAdminLocations />} />
+              <Route path="caerhold/districts" element={<CaerholdAdminDistricts />} />
+              <Route path="caerhold/districts/:id" element={<CaerholdDistrictEditor />} />
+              <Route path="caerhold/welcome-config" element={<CaerholdWelcomeConfig />} />
             </Route>
 
             {/* Caerhold public routes */}
@@ -107,6 +116,9 @@ const App = () => (
             <Route path="/caerhold/residents/:slug" element={<CaerholdResidentProfile />} />
             <Route path="/caerhold/locations" element={<CaerholdLocations />} />
             <Route path="/caerhold/locations/:slug" element={<CaerholdLocationPage />} />
+            <Route path="/caerhold/districts" element={<CaerholdDistricts />} />
+            <Route path="/caerhold/districts/:slug" element={<CaerholdDistrictDetail />} />
+            <Route path="/caerhold/map" element={<CaerholdMap />} />
 
             {/* Redirects */}
             <Route path="/caerhold/admin/*" element={<Navigate to="/admin/caerhold" replace />} />

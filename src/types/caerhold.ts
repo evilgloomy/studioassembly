@@ -6,6 +6,7 @@
 export type CaerholdAuthorType = 'resident' | 'location';
 export type CaerholdPostStatus = 'draft' | 'approved' | 'scheduled' | 'published';
 export type CaerholdLocationType = 'landmark' | 'business' | 'residence' | 'street' | 'park';
+export type CaerholdRelationType = 'friend' | 'coworker' | 'rival' | 'family' | 'neighbor';
 
 // Tone Profile for residents (controls AI caption generation voice)
 export interface CaerholdToneProfile {
@@ -28,6 +29,20 @@ export interface CaerholdCanonRules {
 // Database Row Types
 // =====================================================
 
+export interface CaerholdDistrict {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string | null;
+  description: string | null;
+  hero_image_url: string | null;
+  sort_order: number;
+  is_published: boolean;
+  map_hotspot: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CaerholdResident {
   id: string;
   slug: string;
@@ -46,6 +61,8 @@ export interface CaerholdResident {
   posting_enabled: boolean;
   is_child: boolean;
   avatar_media_id: string | null;
+  home_district_id: string | null;
+  primary_work_location_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -58,7 +75,23 @@ export interface CaerholdLocation {
   description: string | null;
   canon_rules: CaerholdCanonRules;
   hero_media_id: string | null;
+  district_id: string | null;
   created_at: string;
+  updated_at: string;
+}
+
+export interface CaerholdResidentConnection {
+  id: string;
+  resident_id: string;
+  connected_resident_id: string;
+  relation_type: string;
+  note: string | null;
+  created_at: string;
+}
+
+export interface CaerholdSiteSettings {
+  key: string;
+  value: Record<string, any>;
   updated_at: string;
 }
 
@@ -149,6 +182,17 @@ export interface CaerholdMediaWithTags extends CaerholdMedia {
 // Form/Input Types
 // =====================================================
 
+export interface CaerholdDistrictInput {
+  slug: string;
+  name: string;
+  tagline?: string | null;
+  description?: string | null;
+  hero_image_url?: string | null;
+  sort_order?: number;
+  is_published?: boolean;
+  map_hotspot?: Record<string, any> | null;
+}
+
 export interface CaerholdResidentInput {
   slug: string;
   display_name: string;
@@ -166,6 +210,8 @@ export interface CaerholdResidentInput {
   posting_enabled?: boolean;
   is_child?: boolean;
   avatar_media_id?: string | null;
+  home_district_id?: string | null;
+  primary_work_location_id?: string | null;
 }
 
 export interface CaerholdLocationInput {

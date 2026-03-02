@@ -1,8 +1,13 @@
 import { CaerholdLayout } from '@/components/caerhold/CaerholdLayout';
 import { useCaerholdResident } from '@/hooks/caerhold/useCaerholdResidents';
 import { useCaerholdResidentPosts } from '@/hooks/caerhold/useCaerholdPosts';
+import { useCaerholdResidentConnections } from '@/hooks/caerhold/useCaerholdConnections';
+import { useCaerholdDistricts } from '@/hooks/caerhold/useCaerholdDistricts';
+import { useCaerholdLocations } from '@/hooks/caerhold/useCaerholdLocations';
 import { useParams, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useMemo } from 'react';
 import type { CaerholdCanonRules } from '@/types/caerhold';
 import heroBanner from '@/assets/caerhold-banner.png';
 import botanicalLeaves from '@/assets/botanical-leaves.svg';
@@ -63,6 +68,19 @@ export default function CaerholdResidentProfile() {
   const { slug } = useParams<{ slug: string }>();
   const { data: resident, isLoading: residentLoading } = useCaerholdResident(slug || '');
   const { data: posts, isLoading: postsLoading } = useCaerholdResidentPosts(resident?.id || '', true);
+  const { data: connections } = useCaerholdResidentConnections(resident?.id || '');
+  const { data: districts } = useCaerholdDistricts();
+  const { data: locations } = useCaerholdLocations();
+
+  const homeDistrict = useMemo(() => {
+    if (!resident || !districts || !(resident as any).home_district_id) return null;
+    return districts.find((d: any) => d.id === (resident as any).home_district_id) || null;
+  }, [resident, districts]);
+
+  const workLocation = useMemo(() => {
+    if (!resident || !locations || !(resident as any).primary_work_location_id) return null;
+    return locations.find((l: any) => l.id === (resident as any).primary_work_location_id) || null;
+  }, [resident, locations]);
 
   if (residentLoading) {
     return (
@@ -151,10 +169,54 @@ export default function CaerholdResidentProfile() {
         )}
       </div>
 
+      {/* Lives in / Works at */}
+      {(homeDistrict || workLocation) && (
+        <div className="max-w-2xl mx-auto mt-6 px-4 flex flex-wrap justify-center gap-4">
+          {homeDistrict && (
+            <Link to={`/caerhold/districts/${homeDistrict.slug}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <span className="font-medium">Lives in</span>
+              <Badge variant="outline">{homeDistrict.name}</Badge>
+            </Link>
+          )}
+          {workLocation && (
+            <Link to={`/caerhold/locations/${workLocation.slug}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <span className="font-medium">Works at</span>
+              <Badge variant="outline">{workLocation.name}</Badge>
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Bio */}
       {resident.bio && (
         <div className="max-w-2xl mx-auto mt-8 px-4">
           <p className="text-foreground leading-relaxed text-lg text-center">{resident.bio}</p>
+        </div>
+      )}
+
+      {/* Connections */}
+      {connections && connections.length > 0 && (
+        <div className="max-w-2xl mx-auto mt-8 px-4">
+          <DetailCard title="Connections">
+            <div className="flex flex-wrap gap-3">
+              {connections.map((conn: any) => (
+                <Link
+                  key={conn.id}
+                  to={`/caerhold/residents/${conn.connected_resident?.slug}`}
+                  className="inline-flex items-center gap-2 border border-border rounded-full px-3 py-1.5 hover:border-primary transition-colors"
+                >
+                  <Avatar className="h-6 w-6">
+                    {conn.connected_resident?.avatar_url && (
+                      <AvatarImage src={conn.connected_resident.avatar_url} className="object-contain scale-[2] origin-center" />
+                    )}
+                    <AvatarFallback className="text-xs">{conn.connected_resident?.display_name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{conn.connected_resident?.display_name}</span>
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{conn.relation_type}</Badge>
+                </Link>
+              ))}
+            </div>
+          </DetailCard>
         </div>
       )}
 

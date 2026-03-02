@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Newspaper, Users } from 'lucide-react';
+import { ArrowLeft, MapPin, Newspaper, Users, Map, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/contexts/AuthContext';
 
@@ -46,6 +46,20 @@ export function CaerholdHeader({ className }: CaerholdHeaderProps) {
           >
             <MapPin className="h-4 w-4" />
             Locations
+          </Link>
+          <Link 
+            to="/caerhold/districts" 
+            className="flex items-center gap-2 text-sm tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Building2 className="h-4 w-4" />
+            Districts
+          </Link>
+          <Link 
+            to="/caerhold/map" 
+            className="flex items-center gap-2 text-sm tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Map className="h-4 w-4" />
+            Map
           </Link>
           {hasCaerholdAccess && (
             <Link 
