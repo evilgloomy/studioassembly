@@ -14,11 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      caerhold_districts: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          hero_image_url: string | null
+          id: string
+          is_published: boolean | null
+          map_hotspot: Json | null
+          name: string
+          slug: string
+          sort_order: number | null
+          tagline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          map_hotspot?: Json | null
+          name: string
+          slug: string
+          sort_order?: number | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          map_hotspot?: Json | null
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       caerhold_locations: {
         Row: {
           canon_rules: Json
           created_at: string
           description: string | null
+          district_id: string | null
           hero_media_id: string | null
           id: string
           name: string
@@ -30,6 +73,7 @@ export type Database = {
           canon_rules?: Json
           created_at?: string
           description?: string | null
+          district_id?: string | null
           hero_media_id?: string | null
           id?: string
           name: string
@@ -41,6 +85,7 @@ export type Database = {
           canon_rules?: Json
           created_at?: string
           description?: string | null
+          district_id?: string | null
           hero_media_id?: string | null
           id?: string
           name?: string
@@ -49,6 +94,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "caerhold_locations_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_districts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_hero_media"
             columns: ["hero_media_id"]
@@ -320,6 +372,48 @@ export type Database = {
           },
         ]
       }
+      caerhold_resident_connections: {
+        Row: {
+          connected_resident_id: string
+          created_at: string | null
+          id: string
+          note: string | null
+          relation_type: string
+          resident_id: string
+        }
+        Insert: {
+          connected_resident_id: string
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          relation_type?: string
+          resident_id: string
+        }
+        Update: {
+          connected_resident_id?: string
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          relation_type?: string
+          resident_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_resident_connections_connected_resident_id_fkey"
+            columns: ["connected_resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_resident_connections_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caerhold_resident_portraits: {
         Row: {
           created_at: string
@@ -482,12 +576,14 @@ export type Database = {
           display_name: string
           first_name: string | null
           handle: string
+          home_district_id: string | null
           id: string
           is_child: boolean
           last_name: string | null
           lore_hooks: Json
           personality: Json
           posting_enabled: boolean
+          primary_work_location_id: string | null
           profile_status: string
           role_title: string | null
           slug: string
@@ -503,12 +599,14 @@ export type Database = {
           display_name: string
           first_name?: string | null
           handle: string
+          home_district_id?: string | null
           id?: string
           is_child?: boolean
           last_name?: string | null
           lore_hooks?: Json
           personality?: Json
           posting_enabled?: boolean
+          primary_work_location_id?: string | null
           profile_status?: string
           role_title?: string | null
           slug: string
@@ -524,12 +622,14 @@ export type Database = {
           display_name?: string
           first_name?: string | null
           handle?: string
+          home_district_id?: string | null
           id?: string
           is_child?: boolean
           last_name?: string | null
           lore_hooks?: Json
           personality?: Json
           posting_enabled?: boolean
+          primary_work_location_id?: string | null
           profile_status?: string
           role_title?: string | null
           slug?: string
@@ -538,6 +638,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "caerhold_residents_home_district_id_fkey"
+            columns: ["home_district_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caerhold_residents_primary_work_location_id_fkey"
+            columns: ["primary_work_location_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "caerhold_residents_source_media_id_fkey"
             columns: ["source_media_id"]
@@ -553,6 +667,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      caerhold_site_settings: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
       }
       journal_posts: {
         Row: {

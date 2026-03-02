@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCaerholdResidentById, useUpdateCaerholdResident } from '@/hooks/caerhold/useCaerholdResidents';
+import { useCaerholdResidentById, useUpdateCaerholdResident, useCaerholdResidents } from '@/hooks/caerhold/useCaerholdResidents';
 import { usePublishResident, useUnpublishResident, useGenerateResidentProfile } from '@/hooks/caerhold/useCaerholdResidentImport';
+import { useCaerholdDistricts } from '@/hooks/caerhold/useCaerholdDistricts';
+import { useCaerholdLocations } from '@/hooks/caerhold/useCaerholdLocations';
+import { useCaerholdResidentConnections, useCreateConnection, useDeleteConnection } from '@/hooks/caerhold/useCaerholdConnections';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +19,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera, Undo2, Sparkles, Check, Trash2, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, Send, RefreshCw, Eye, EyeOff, Camera, Undo2, Sparkles, Check, Trash2, Plus, X, Link2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   useCaerholdTagDefinitions,
@@ -33,6 +36,12 @@ export default function ResidentEditor() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: resident, isLoading } = useCaerholdResidentById(id || '');
+  const { data: allResidents } = useCaerholdResidents();
+  const { data: districts } = useCaerholdDistricts(false);
+  const { data: locations } = useCaerholdLocations();
+  const { data: connections } = useCaerholdResidentConnections(id || '');
+  const createConnection = useCreateConnection();
+  const deleteConnection = useDeleteConnection();
   const updateMutation = useUpdateCaerholdResident();
   const publishMutation = usePublishResident();
   const unpublishMutation = useUnpublishResident();
@@ -65,6 +74,8 @@ export default function ResidentEditor() {
       personality: (r as any).personality || {},
       lore_hooks: (r as any).lore_hooks || {},
       canon_rules: r.canon_rules || {},
+      home_district_id: (r as any).home_district_id || '',
+      primary_work_location_id: (r as any).primary_work_location_id || '',
     };
   };
 
@@ -159,6 +170,8 @@ export default function ResidentEditor() {
           is_child: form.is_child ?? false,
           personality: form.personality,
           lore_hooks: form.lore_hooks,
+          home_district_id: form.home_district_id || null,
+          primary_work_location_id: form.primary_work_location_id || null,
         })
         .eq('id', id);
 
@@ -522,16 +535,43 @@ export default function ResidentEditor() {
         </div>
       </section>
 
+      {/* Geography */}
+      <section className="space-y-4 border border-border p-6">
+        <h2 className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Geography</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-xs tracking-widest uppercase">Home District</Label>
+            <Select value={form.home_district_id || 'none'} onValueChange={v => updateField('home_district_id', v === 'none' ? '' : v)}>
+              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {(districts || []).map((d: any) => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs tracking-widest uppercase">Primary Work Location</Label>
+            <Select value={form.primary_work_location_id || 'none'} onValueChange={v => updateField('primary_work_location_id', v === 'none' ? '' : v)}>
+              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {(locations || []).map((l: any) => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </section>
+
+      {/* Connections */}
+      {id && <ResidentConnectionsSection residentId={id} connections={connections || []} allResidents={allResidents || []} createConnection={createConnection} deleteConnection={deleteConnection} />}
+
       {/* Lore Hooks */}
       <section className="space-y-4 border border-border p-6">
         <h2 className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Lore Hooks</h2>
-        <div className="space-y-2">
-          <Label className="text-xs tracking-widest uppercase">Home District</Label>
-          <Input
-            value={form.lore_hooks?.home_district || ''}
-            onChange={e => updateNestedField('lore_hooks', 'home_district', e.target.value)}
-          />
-        </div>
         <div className="space-y-2">
           <Label className="text-xs tracking-widest uppercase">Affiliations (comma-separated)</Label>
           <Input
@@ -751,6 +791,79 @@ function ResidentTagsSection({ residentId }: { residentId: string }) {
             <Plus className="mr-1 h-4 w-4" /> Add
           </Button>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function ResidentConnectionsSection({ residentId, connections, allResidents, createConnection, deleteConnection }: any) {
+  const [selectedResident, setSelectedResident] = useState('');
+  const [relationType, setRelationType] = useState('friend');
+  const [note, setNote] = useState('');
+  const { toast } = useToast();
+
+  const connectedIds = new Set((connections || []).map((c: any) => c.connected_resident_id));
+  const availableResidents = (allResidents || []).filter((r: any) => r.id !== residentId && !connectedIds.has(r.id));
+
+  const handleAdd = async () => {
+    if (!selectedResident) return;
+    try {
+      await createConnection.mutateAsync({ resident_id: residentId, connected_resident_id: selectedResident, relation_type: relationType, note: note || undefined });
+      setSelectedResident('');
+      setNote('');
+      toast({ title: 'Connection added' });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    }
+  };
+
+  const handleRemove = async (connId: string) => {
+    try {
+      await deleteConnection.mutateAsync(connId);
+      toast({ title: 'Connection removed' });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    }
+  };
+
+  return (
+    <section className="space-y-4 border border-border p-6">
+      <h2 className="text-sm font-bold tracking-widest uppercase text-muted-foreground flex items-center gap-2">
+        <Link2 className="h-4 w-4" /> Connections
+      </h2>
+
+      {/* Existing connections */}
+      <div className="flex flex-wrap gap-2">
+        {(connections || []).map((c: any) => (
+          <Badge key={c.id} variant="outline" className="gap-1 cursor-pointer" onClick={() => handleRemove(c.id)}>
+            {c.connected_resident?.display_name || 'Unknown'} ({c.relation_type})
+            <X className="h-3 w-3" />
+          </Badge>
+        ))}
+        {(!connections || connections.length === 0) && <p className="text-xs text-muted-foreground">No connections yet.</p>}
+      </div>
+
+      {/* Add new */}
+      <div className="grid grid-cols-3 gap-2">
+        <Select value={selectedResident} onValueChange={setSelectedResident}>
+          <SelectTrigger><SelectValue placeholder="Pick resident..." /></SelectTrigger>
+          <SelectContent>
+            {availableResidents.map((r: any) => (
+              <SelectItem key={r.id} value={r.id}>{r.display_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={relationType} onValueChange={setRelationType}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {['friend', 'coworker', 'rival', 'family', 'neighbor'].map(t => (
+              <SelectItem key={t} value={t}>{t}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button variant="outline" size="sm" onClick={handleAdd} disabled={!selectedResident || createConnection.isPending}>
+          <Plus className="mr-1 h-4 w-4" /> Add
+        </Button>
       </div>
     </section>
   );
