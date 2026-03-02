@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Newspaper, Users } from 'lucide-react';
+import { ArrowLeft, MapPin, Newspaper, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/contexts/AuthContext';
 
@@ -14,11 +14,16 @@ export function CaerholdHeader({ className }: CaerholdHeaderProps) {
   return (
     <header className={cn('border-b border-border bg-card', className)}>
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link to="/caerhold" className="flex items-center gap-2">
-          <span className="text-xl font-bold tracking-widest uppercase">
-            City of Caerhold
-          </span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Back to Studio Assembly">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <Link to="/caerhold" className="flex items-center gap-2">
+            <span className="text-xl font-bold tracking-widest uppercase">
+              City of Caerhold
+            </span>
+          </Link>
+        </div>
 
         <nav className="flex items-center gap-6">
           <Link 
