@@ -41,7 +41,7 @@ export default function ResidentChat() {
     setIsStreaming(true);
 
     // Add user message to streaming display
-    setStreamingMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setStreamingMessages([{ role: 'user', content: userMsg }]);
 
     let assistantSoFar = '';
 
@@ -51,23 +51,21 @@ export default function ResidentChat() {
         message: userMsg,
         onDelta: (chunk) => {
           assistantSoFar += chunk;
-          setStreamingMessages(prev => {
-            const last = prev[prev.length - 1];
-            if (last?.role === 'assistant') {
-              return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
-            }
-            return [...prev, { role: 'assistant', content: assistantSoFar }];
-          });
+          setStreamingMessages([
+            { role: 'user', content: userMsg },
+            { role: 'assistant', content: assistantSoFar },
+          ]);
         },
         onDone: () => {
-          setIsStreaming(false);
-          // Clear streaming messages after data refetches
-          setTimeout(() => setStreamingMessages([]), 500);
+          // Don't clear yet - wait for refetch
         },
       });
     } catch (e: any) {
-      setIsStreaming(false);
       toast({ title: 'Chat Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setIsStreaming(false);
+      // Clear streaming messages after a brief delay for refetch
+      setTimeout(() => setStreamingMessages([]), 1500);
     }
   };
 
