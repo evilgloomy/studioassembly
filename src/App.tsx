@@ -33,6 +33,7 @@ import CaerholdHome from "./pages/caerhold/Index";
 import CaerholdFeed from "./pages/caerhold/Feed";
 import CaerholdResidents from "./pages/caerhold/Residents";
 import CaerholdResidentProfile from "./pages/caerhold/ResidentProfile";
+import CaerholdResidentChat from "./pages/caerhold/ResidentChat";
 import CaerholdLocations from "./pages/caerhold/Locations";
 import CaerholdLocationPage from "./pages/caerhold/LocationPage";
 import CaerholdDistricts from "./pages/caerhold/Districts";
@@ -116,6 +117,7 @@ const App = () => (
             <Route path="/caerhold/feed" element={<CaerholdFeed />} />
             <Route path="/caerhold/residents" element={<CaerholdResidents />} />
             <Route path="/caerhold/residents/:slug" element={<CaerholdResidentProfile />} />
+            <Route path="/caerhold/residents/:slug/chat" element={<CaerholdResidentChat />} />
             <Route path="/caerhold/locations" element={<CaerholdLocations />} />
             <Route path="/caerhold/locations/:slug" element={<CaerholdLocationPage />} />
             <Route path="/caerhold/districts" element={<CaerholdDistricts />} />

@@ -284,6 +284,54 @@ export interface CaerholdPostUpdate {
 }
 
 // =====================================================
+// Relationship & Chat Types
+// =====================================================
+
+export interface CaerholdVisitorRelationship {
+  id: string;
+  user_id: string;
+  resident_id: string;
+  affection: number;
+  trust: number;
+  comfort: number;
+  respect: number;
+  compatibility: number;
+  composite_score: number;
+  interaction_count: number;
+  last_interaction: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CaerholdChatMessage {
+  id: string;
+  user_id: string;
+  resident_id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  emotional_state: Record<string, any> | null;
+  created_at: string;
+}
+
+export type CaerholdRelationshipTier = 'Stranger' | 'Acquaintance' | 'Neighbor' | 'Friend' | 'Confidant';
+
+export function getRelationshipTier(compositeScore: number): CaerholdRelationshipTier {
+  if (compositeScore >= 76) return 'Confidant';
+  if (compositeScore >= 56) return 'Friend';
+  if (compositeScore >= 36) return 'Neighbor';
+  if (compositeScore >= 16) return 'Acquaintance';
+  return 'Stranger';
+}
+
+export const RELATIONSHIP_TIER_CONFIG: Record<CaerholdRelationshipTier, { min: number; max: number; color: string; icon: string }> = {
+  Stranger:     { min: 0,  max: 15,  color: 'hsl(0, 0%, 60%)',   icon: '👤' },
+  Acquaintance: { min: 16, max: 35,  color: 'hsl(200, 50%, 50%)', icon: '🤝' },
+  Neighbor:     { min: 36, max: 55,  color: 'hsl(122, 39%, 49%)', icon: '🏘️' },
+  Friend:       { min: 56, max: 75,  color: 'hsl(45, 90%, 50%)',  icon: '⭐' },
+  Confidant:    { min: 76, max: 100, color: 'hsl(280, 60%, 55%)', icon: '💜' },
+};
+
+// =====================================================
 // API Response Types
 // =====================================================
 
