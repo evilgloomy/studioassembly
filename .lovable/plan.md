@@ -1,185 +1,274 @@
 
 
-# Enhanced Locations: AI Profiles, Owners, and Rich Detail Pages
+# Integrating ArtistAgent.AI Systems into Caerhold
 
-## Overview
+## What This Means
 
-This plan enriches Caerhold locations with AI-generated profiles (from images), owner assignments (residents who run a location), and richer public detail pages. It mirrors the resident profile generation pattern already in the codebase.
+The [ArtistAgent.AI](/projects/ee744222-6c7f-4bd5-b7f3-347d2438f7b3) project has three core systems that map well onto Caerhold's residents:
+
+1. **LEMO** (Lovable Emotional Management Operations) -- A multi-dimensional relationship scoring engine that tracks affection, trust, comfort, respect, and compatibility between users and characters. It uses sentiment analysis, anti-gaming mechanics, and relationship tiers to dynamically shape how a character responds.
+
+2. **Aurora Brain** -- A memory and emotional intelligence engine. It gives characters persistent emotional context (emotional state, micro-expressions, conversation arc tracking) and uses that to modify response tone, length, and personality expression.
+
+3. **Character System** -- Rich character profiles with personality traits, MBTI, zodiac, visual identity, and system prompts for AI-driven conversations.
+
+Caerhold already has a solid foundation: residents have `tone_profile`, `canon_rules`, `personality`, and `lore_hooks`. What's missing is the **live interaction layer** -- residents can't "talk" to visitors, and there's no relationship tracking or emotional memory.
+
+---
+
+## Adapted Architecture for Caerhold
+
+The ArtistAgent system is designed for 1:1 romantic AI companions. Caerhold needs a **municipal, wholesome** adaptation: residents are city characters you can chat with, and the relationship system tracks familiarity/rapport rather than romance.
+
+### Relationship Tiers (Caerhold-adapted)
+
+Instead of Blocked → Hostile → ... → Intimate, we use:
+
+| Tier | Composite Range | Description |
+|------|----------------|-------------|
+| Stranger | 0-15 | First encounter, formal |
+| Acquaintance | 16-35 | Recognizes you, friendly |
+| Neighbor | 36-55 | Comfortable, shares stories |
+| Friend | 56-75 | Open, personal, helpful |
+| Confidant | 76-100 | Deep trust, inside jokes |
+
+No heat tiers. No adult content gating. Clean, city-life focused.
 
 ---
 
 ## 1. Database Migration
 
-### Expand `caerhold_location_type` enum
+### New table: `caerhold_visitor_relationships`
 
-Add new values: `cafe`, `restaurant`, `retail`, `civic`, `service`, `entertainment`, `office`
-
-### Add columns to `caerhold_locations`
-
-| Column | Type | Default | Purpose |
-|--------|------|---------|---------|
-| is_published | boolean | false | Publish workflow |
-| hero_image_url | text | null | Display hero (separate from hero_media_id) |
-| ai_status | text | 'idle' | idle / queued / generated / error |
-| ai_generated_json | jsonb | null | Raw AI output |
-| ai_prompt_version | text | 'loc_v1' | Track prompt version |
-| ai_locked_fields | text[] | '{}' | Fields manually edited (skip on regenerate) |
-| short_blurb | text | null | 140-char summary |
-| category | text | null | cafe/shop/civic/etc (display label) |
-| vibe_tags | text[] | null | cozy, modern, etc |
-| signature_items | text[] | null | Menu items, products |
-| visitor_tips | text[] | null | Tips for visitors |
-
-### New table: `caerhold_location_media`
-
-Multiple images per location (hero selection, AI input).
+Tracks relationship state between a site visitor (auth user) and a resident.
 
 ```text
-id           uuid PK
-location_id  uuid FK -> caerhold_locations ON DELETE CASCADE
-media_id     uuid FK -> caerhold_media ON DELETE CASCADE
-sort_order   int default 0
-UNIQUE(location_id, media_id)
+id              uuid PK
+user_id         uuid FK -> auth.users NOT NULL
+resident_id     uuid FK -> caerhold_residents ON DELETE CASCADE NOT NULL
+affection       numeric default 0
+trust           numeric default 0
+comfort         numeric default 0
+respect         numeric default 0
+compatibility   numeric default 0
+composite_score numeric default 0
+interaction_count int default 0
+last_interaction timestamptz
+created_at      timestamptz default now()
+updated_at      timestamptz default now()
+UNIQUE(user_id, resident_id)
 ```
 
-RLS: public SELECT, admin/editor full CRUD.
+### New table: `caerhold_relationship_events`
 
-### New table: `caerhold_location_owners`
-
-Assign residents as owners/managers of a location.
+Stores each scoring event for analytics and velocity calculations.
 
 ```text
-id           uuid PK
-location_id  uuid FK -> caerhold_locations ON DELETE CASCADE
-resident_id  uuid FK -> caerhold_residents ON DELETE CASCADE
-role         text default 'owner'
-note         text
-created_at   timestamptz
-UNIQUE(location_id, resident_id, role)
+id              uuid PK
+user_id         uuid NOT NULL
+resident_id     uuid FK -> caerhold_residents ON DELETE CASCADE NOT NULL
+tag             text NOT NULL
+base_impact     numeric NOT NULL
+delta_affection numeric default 0
+delta_trust     numeric default 0
+delta_comfort   numeric default 0
+delta_respect   numeric default 0
+delta_compatibility numeric default 0
+created_at      timestamptz default now()
 ```
 
-RLS: public SELECT, admin/editor full CRUD.
+### New table: `caerhold_chat_messages`
 
-### Trigger
+Stores conversation history for memory/context.
 
-`update_updated_at_column` on `caerhold_locations` (reuse existing function).
+```text
+id              uuid PK
+user_id         uuid NOT NULL
+resident_id     uuid FK -> caerhold_residents ON DELETE CASCADE NOT NULL
+role            text NOT NULL  -- 'user' or 'assistant'
+content         text NOT NULL
+emotional_state jsonb
+created_at      timestamptz default now()
+```
 
----
+### Database function: `update_caerhold_relationship_scores`
 
-## 2. Edge Function: `generate-location-profile`
+An RPC function that atomically updates relationship dimensions and logs the event (ported from ArtistAgent's `update_relationship_scores_v2`), using Caerhold's 5 tiers.
 
-New edge function modeled on `generate-resident-profile`.
+### RLS
 
-- **Input**: `{ location_id: string }`
-- **Flow**:
-  1. Verify auth + caerhold admin role
-  2. Fetch location + its `caerhold_location_media` images (up to 6)
-  3. Set `ai_status = 'processing'`
-  4. Call Lovable AI (google/gemini-2.5-flash) with vision + tool calling
-  5. Parse structured JSON response
-  6. Sanitize strings (reuse existing sanitizer pattern)
-  7. Map fields to location columns, respecting `ai_locked_fields`
-  8. Set `ai_status = 'generated'`, store raw output in `ai_generated_json`
-
-- **Tool schema** returned by AI:
-  - name, category, short_blurb, description, vibe_tags, signature_items, visitor_tips, notable_details, confidence (name/category scores)
-
-- **Prompt**: Municipal tourism directory tone, infer only from visible cues, strict JSON via tool calling. Categories: cafe, restaurant, retail, residential, civic, park, service, landmark, entertainment, office.
-
-- **Config**: `verify_jwt = false` in config.toml (validate in code like existing functions).
+- `caerhold_visitor_relationships`: Users can SELECT/INSERT/UPDATE their own rows only (`user_id = auth.uid()`). Admins can SELECT all.
+- `caerhold_relationship_events`: Users can SELECT their own. Admins can SELECT all. INSERT via RPC only.
+- `caerhold_chat_messages`: Users can SELECT/INSERT their own. Admins can SELECT all.
 
 ---
 
-## 3. TypeScript Types
+## 2. Edge Function: `chat-with-resident`
 
-Update `src/types/caerhold.ts`:
+Core chat endpoint. Adapts ArtistAgent's prompt composition + LEMO scoring into one flow.
 
-- Update `CaerholdLocationType` to include new enum values
-- Add new fields to `CaerholdLocation` interface (is_published, ai_status, short_blurb, category, vibe_tags, signature_items, visitor_tips, hero_image_url, ai_generated_json, ai_locked_fields)
-- Add `CaerholdLocationMedia` interface
-- Add `CaerholdLocationOwner` interface
-- Add `CaerholdLocationInput` updates for new fields
+**Input**: `{ resident_id, message, conversation_id? }`
 
----
+**Flow**:
+1. Auth check (must be logged in)
+2. Fetch resident (tone_profile, personality, canon_rules, lore_hooks, bio)
+3. Fetch or create visitor relationship
+4. Fetch recent chat messages (last 20) for context
+5. **Compose enhanced prompt** (adapted from `LemoPromptComposer`):
+   - Base system prompt from resident's tone_profile + personality + canon_rules
+   - Inject `[RELATIONSHIP_CONTEXT]` block with tier, affection, trust scores
+   - Apply tone guideline hints based on current tier
+6. Call Lovable AI (gemini-2.5-flash) with streaming
+7. **Post-response LEMO scoring** (adapted from `lemoScoringService`):
+   - Classify user message sentiment (rule-based + keyword matching)
+   - Calculate dimension deltas with anti-gaming (diminishing returns)
+   - Update relationship via RPC
+8. Store both messages in `caerhold_chat_messages`
+9. Return streamed response
 
-## 4. Data Hooks
+**Prompt structure** (per-resident, relationship-aware):
+```
+You are {display_name}, a resident of the City of Caerhold.
+{bio}
 
-### New: `src/hooks/caerhold/useCaerholdLocationMedia.ts`
-- `useCaerholdLocationMedia(locationId)` -- fetch media for a location
-- `useAddLocationMedia()` -- link existing caerhold_media to location
-- `useRemoveLocationMedia()` -- unlink
-- `useReorderLocationMedia()` -- update sort_order
+Voice: {tone_profile.voiceStyle}, {tone_profile.cadence}
+Personality: {personality.traits}, Quirks: {personality.quirks}
+{canon_rules restrictions}
 
-### New: `src/hooks/caerhold/useCaerholdLocationOwners.ts`
-- `useCaerholdLocationOwners(locationId)` -- fetch owners with joined resident data
-- `useAddLocationOwner()` -- mutation
-- `useRemoveLocationOwner()` -- mutation
-
-### Updated: `useCaerholdLocations.ts`
-- Update `mapLocation` to include new fields
-- Update create/update mutations to handle new columns
-- Add `useGenerateLocationProfile()` mutation (calls edge function)
-
----
-
-## 5. Admin CMS Changes
-
-### New: Location Editor page (`src/pages/caerhold/admin/LocationEditor.tsx`)
-
-Full edit page (like ResidentEditor) with sections:
-
-- **Core fields**: Name, slug, type, district dropdown, is_published toggle, description, short_blurb, category
-- **Media section**: Upload/pick images from caerhold_media, set hero, reorder. Shows grid of attached images.
-- **AI Panel**: "Generate from Images" button, status indicator, after generation shows editable fields (category, short_blurb, description, vibe_tags, signature_items, visitor_tips). Tracks locked fields.
-- **Owner Panel**: Search/select residents, assign role (owner/co-owner/manager/founder), display owner cards with remove button.
-- **Detail fields**: vibe_tags, signature_items, visitor_tips (comma-separated inputs)
-
-### Updated: Admin Locations list (`src/pages/caerhold/admin/Locations.tsx`)
-- Add district_id dropdown to create dialog
-- Show district badge + published status in table
-- Add edit link to new LocationEditor page
-
-### Updated: `src/App.tsx`
-- Add route: `caerhold/locations/:id` -> LocationEditor
+[RELATIONSHIP_CONTEXT]
+Tier=Neighbor, Affection=42, Trust=38, Comfort=45
+Be warm and share casual stories. Open up about daily life in Caerhold.
+```
 
 ---
 
-## 6. Public Frontend Updates
+## 3. LEMO Scoring Engine (Caerhold Edition)
 
-### Updated: Locations index (`src/pages/caerhold/Locations.tsx`)
-- Show hero image instead of MapPin placeholder
-- Add category badge, district badge
-- Show owner mini-chip ("Owned by Name")
-- Add category filter alongside type filter
+Simplified version of ArtistAgent's LEMO v3, implemented server-side in the edge function.
 
-### Updated: Location detail page (`src/pages/caerhold/LocationPage.tsx`)
-- Hero image section
-- Short blurb + full description
-- "Visitor Info" blocks: tips, signature items, vibe tags as styled badges
-- Owner section with resident card(s) linking to profiles
-- Keep existing posts section
+**Sentiment classification** -- Rule-based pattern matching (ported from `lemoRuleEngine`):
+- Positive tags: gratitude, praise, agreement, empathy, excitement
+- Negative tags: dismissive, rude
+- No romantic/flirt/love categories (not applicable to city life)
+
+**Relationship dimension mapping** (adapted from `crossDimensionalInfluence`):
+- Asking about their work → +respect, +compatibility
+- Sharing personal stories → +comfort, +trust
+- Complimenting their neighborhood → +affection
+- Being dismissive → -comfort, -respect
+
+**Anti-gaming** (from ArtistAgent's `antiGaming` config):
+- Diminishing returns on repeated positive interactions (0.7 decay)
+- Emotional inertia: rapid-fire messages have reduced impact
+- Volatility threshold: flag suspicious scoring patterns
+
+**Tier progression** -- Composite score is weighted average: `(affection*0.25 + trust*0.25 + comfort*0.2 + respect*0.15 + compatibility*0.15)`
 
 ---
 
-## 7. Implementation Order
+## 4. Relationship Tone Mapper (Caerhold Edition)
 
-1. Database migration (expand enum, add columns, create tables, RLS)
+Adapted from `relationshipToneMapper.ts`. Maps tier to prompt injection hints:
+
+| Tier | Prompt Hint |
+|------|------------|
+| Stranger | "Be polite and formal. Introduce yourself. Keep responses brief." |
+| Acquaintance | "Be friendly, use their name. Share surface-level city info." |
+| Neighbor | "Be warm and casual. Share stories about the district. Light humor." |
+| Friend | "Be open and personal. Reference past conversations. Offer genuine advice." |
+| Confidant | "Be deeply familiar. Use inside references. Show vulnerability. Long, personal responses." |
+
+---
+
+## 5. Frontend: Chat with Residents
+
+### New: `src/pages/caerhold/ResidentChat.tsx`
+
+Full-page chat interface for talking to a resident.
+
+- Hero bar: resident avatar, name, role, relationship tier badge
+- Message list with markdown rendering
+- Input bar with send button
+- Relationship meter: small visual showing current tier + progress bar to next tier
+- "First meeting" greeting message from resident's existing greeting/bio
+
+### New: `src/components/caerhold/RelationshipMeter.tsx`
+
+Visual component showing:
+- Current tier name + icon
+- Progress bar (composite_score mapped to 0-100 within tier range)
+- Dimension breakdown on hover/click (affection, trust, comfort, respect, compatibility as small bars)
+
+### Updated: `src/pages/caerhold/ResidentProfile.tsx`
+
+- Add "Chat with {name}" button (links to `/caerhold/residents/:slug/chat`)
+- Show relationship tier badge if logged in and relationship exists
+
+### New route: `/caerhold/residents/:slug/chat` -> ResidentChat
+
+---
+
+## 6. Types
+
+Add to `src/types/caerhold.ts`:
+
+```typescript
+interface CaerholdVisitorRelationship {
+  id: string;
+  user_id: string;
+  resident_id: string;
+  affection: number;
+  trust: number;
+  comfort: number;
+  respect: number;
+  compatibility: number;
+  composite_score: number;
+  interaction_count: number;
+  last_interaction: string | null;
+}
+
+interface CaerholdChatMessage {
+  id: string;
+  user_id: string;
+  resident_id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  emotional_state: Record<string, any> | null;
+  created_at: string;
+}
+
+type CaerholdRelationshipTier = 'Stranger' | 'Acquaintance' | 'Neighbor' | 'Friend' | 'Confidant';
+```
+
+---
+
+## 7. Data Hooks
+
+### `src/hooks/caerhold/useCaerholdChat.ts`
+- `useCaerholdChatMessages(residentId)` -- fetch message history
+- `useSendMessage()` -- mutation that calls edge function, handles streaming
+- `useCaerholdRelationship(residentId)` -- fetch current relationship state
+
+---
+
+## 8. Implementation Order
+
+1. Database migration (3 tables + RPC function + RLS)
 2. Types update
-3. Edge function: generate-location-profile
-4. Data hooks (location media, owners, updated locations)
-5. Admin LocationEditor page
-6. Admin Locations list updates + route
-7. Public Locations index upgrade
-8. Public LocationPage detail upgrade
+3. Edge function: `chat-with-resident` (with inline LEMO scoring + tone mapping)
+4. Chat hooks
+5. RelationshipMeter component
+6. ResidentChat page
+7. ResidentProfile "Chat" button + route
+8. Config.toml update
 
 ---
 
-## 8. RLS Summary
+## What's NOT Included (Future)
 
-| Table | Public SELECT | Admin CRUD |
-|-------|--------------|------------|
-| caerhold_location_media | true | is_caerhold_admin_or_editor |
-| caerhold_location_owners | true | is_caerhold_admin_or_editor |
-
-Existing `caerhold_locations` policies remain; the `is_published` filter will be added to the public SELECT policy.
+- **Aurora Memory/MemVid**: Vector-based memory search. Too complex for v1 -- we use simple message history instead.
+- **Micro-expressions / emotional interjections**: The `*blushes*` style responses don't fit Caerhold's municipal tone.
+- **Heat tiers / consent system**: Not applicable to wholesome city interactions.
+- **Predictive analytics / forecasting**: Nice-to-have for admin dashboard later.
+- **Group chat**: Multiple residents chatting together (future feature).
 
