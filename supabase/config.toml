@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.generate-location-profile]
 verify_jwt = false
+
+[functions.chat-with-resident]
+verify_jwt = false

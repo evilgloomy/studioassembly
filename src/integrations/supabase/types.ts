@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      caerhold_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          emotional_state: Json | null
+          id: string
+          resident_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          emotional_state?: Json | null
+          id?: string
+          resident_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          emotional_state?: Json | null
+          id?: string
+          resident_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_chat_messages_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caerhold_districts: {
         Row: {
           created_at: string | null
@@ -486,6 +524,56 @@ export type Database = {
           },
         ]
       }
+      caerhold_relationship_events: {
+        Row: {
+          base_impact: number
+          created_at: string
+          delta_affection: number
+          delta_comfort: number
+          delta_compatibility: number
+          delta_respect: number
+          delta_trust: number
+          id: string
+          resident_id: string
+          tag: string
+          user_id: string
+        }
+        Insert: {
+          base_impact?: number
+          created_at?: string
+          delta_affection?: number
+          delta_comfort?: number
+          delta_compatibility?: number
+          delta_respect?: number
+          delta_trust?: number
+          id?: string
+          resident_id: string
+          tag: string
+          user_id: string
+        }
+        Update: {
+          base_impact?: number
+          created_at?: string
+          delta_affection?: number
+          delta_comfort?: number
+          delta_compatibility?: number
+          delta_respect?: number
+          delta_trust?: number
+          id?: string
+          resident_id?: string
+          tag?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_relationship_events_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caerhold_resident_connections: {
         Row: {
           connected_resident_id: string
@@ -799,6 +887,62 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      caerhold_visitor_relationships: {
+        Row: {
+          affection: number
+          comfort: number
+          compatibility: number
+          composite_score: number
+          created_at: string
+          id: string
+          interaction_count: number
+          last_interaction: string | null
+          resident_id: string
+          respect: number
+          trust: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affection?: number
+          comfort?: number
+          compatibility?: number
+          composite_score?: number
+          created_at?: string
+          id?: string
+          interaction_count?: number
+          last_interaction?: string | null
+          resident_id: string
+          respect?: number
+          trust?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affection?: number
+          comfort?: number
+          compatibility?: number
+          composite_score?: number
+          created_at?: string
+          id?: string
+          interaction_count?: number
+          last_interaction?: string | null
+          resident_id?: string
+          respect?: number
+          trust?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caerhold_visitor_relationships_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "caerhold_residents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       journal_posts: {
         Row: {
@@ -1150,6 +1294,20 @@ export type Database = {
       is_caerhold_admin_or_editor: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      update_caerhold_relationship_scores: {
+        Args: {
+          p_base_impact: number
+          p_delta_affection?: number
+          p_delta_comfort?: number
+          p_delta_compatibility?: number
+          p_delta_respect?: number
+          p_delta_trust?: number
+          p_resident_id: string
+          p_tag: string
+          p_user_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {

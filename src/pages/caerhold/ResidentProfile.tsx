@@ -6,6 +6,8 @@ import { useCaerholdDistricts } from '@/hooks/caerhold/useCaerholdDistricts';
 import { useCaerholdLocations } from '@/hooks/caerhold/useCaerholdLocations';
 import { useParams, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { MessageCircle } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useMemo } from 'react';
 import type { CaerholdCanonRules } from '@/types/caerhold';
@@ -167,6 +169,14 @@ export default function CaerholdResidentProfile() {
             <Badge variant="secondary">Young Resident</Badge>
           </div>
         )}
+        <div className="mt-4">
+          <Link to={`/caerhold/residents/${slug}/chat`}>
+            <Button variant="outline" size="sm" className="gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Chat with {resident.display_name}
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Lives in / Works at */}
