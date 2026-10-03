@@ -36,7 +36,7 @@ const Header = () => {
                   isActive(link.path) ? "underline underline-offset-8 decoration-1" : ""
                 }`}
               >
-                {link.icon && <link.icon className="h-4 w-4" />}
+                {link.icon && <link.icon className="h-4 w-4 text-accent" />}
                 {link.name}
               </Link>
             ))}
@@ -65,7 +65,7 @@ const Header = () => {
                     isActive(link.path) ? "underline underline-offset-4 decoration-1" : ""
                   }`}
                 >
-                  {link.icon && <link.icon className="h-4 w-4" />}
+                  {link.icon && <link.icon className="h-4 w-4 text-accent" />}
                   {link.name}
                 </Link>
               ))}

@@ -12,8 +12,8 @@ const Footer = () => {
               STUDIO ASSEMBLY
             </h3>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-md">
-              Curated construction kits for the modern builder. We design experiences 
-              for adult collectors who appreciate precision, scale, and architectural beauty.
+              Studio Assembly keeps the City of Caerhold. The kits are its buildings,
+              drawn for people who want a place, not a product line.
             </p>
           </div>
 
@@ -23,6 +23,12 @@ const Footer = () => {
               NAVIGATE
             </h4>
             <nav className="flex flex-col gap-3">
+              <Link to="/caerhold" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                City of Caerhold
+              </Link>
+              <Link to="/caerhold/residents" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Residents
+              </Link>
               <Link to="/shop" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Shop
               </Link>
